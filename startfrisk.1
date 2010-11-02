@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+
+logdir="$HOME"/.xfrisk
+
+
 # while loop to give options for exiting:
 # There's now an option to restart the game,
 # in case you closed it by accident.
@@ -7,8 +12,6 @@
 # keep the server running. Not sure what good that is,
 # but if you do that, and then run the script again, it restarts game.
 # Killing the server also removes the pid file.
-
-logdir="$HOME"/.xfrisk
 
 function get_out {
 while true; do
@@ -43,7 +46,6 @@ fi
 # If pid file exists (i.e. if server is running)
 # then just start the game. 
 # else start the server, store the pid in a file, then start game.
-
 
 if [[ -f "$logdir"/frisk.pid ]]
 then    
