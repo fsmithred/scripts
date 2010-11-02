@@ -1,0 +1,145 @@
+#!/bin/bash
+
+# Synopsis: Select files based on name and age, 
+# move them into a subdirectory (old/old_<names>_date +%y-%m-%d/)
+#
+# One or two search patterns are used as command line arguments 
+# to include files. For more than two, edit the script.
+
+clear; date; echo
+
+# Test for at least one argument (at least one search pattern for 'find')
+if [ "$#" -eq 0 ]
+then
+    echo "
+    Usage: $0 \"*<pattern_0>*\" \"*<pattern_n>*\"
+    Where <pattern> matches the names of files you want to move to old/.
+    You must quote each pattern.
+"
+    exit 1
+fi
+
+echo -n "
+    Select files by age.
+    Example: Use +30 to move files older than 30 days,
+    or use -10 to move files modified in the last 10 days.
+    
+Age of files: "
+read MTIME
+
+
+#      Get ready to find files that match the specified patterns and age.
+#
+#      Exclude this script, exclude OLD (top-level dir for all the OLD_DIRs.) 
+#
+#      To exclude a pattern from the found files, add a pattern to the REGEX
+#      variable; uncomment the variable and the tail end of the tests.
+#      Note: Don't leave the tests for REGEX uncommented with no variable,
+#      or you'll find no files. 
+#
+#      To include more patterns, add more 'for' loops for $3, $4, etc.
+
+EXCLUDE="$0"
+OLD="old"
+# REGEX EXAMPLES:
+# "[[:digit:]]" is same as "[0-9]" ; "^./sys" excludes files that begin with "sys" (find adds the path).
+# "\.sh$" excludes files ending in ".sh" ; "rev" excludes files that contain "rev" anywhere in the name.
+# "rev." excludes any files with "rev" plus at least one character after it. Use "rev\." to exclude "rev." 
+#REGEX="this_unlikely_string"
+#REGEX="\.sh$"
+if [[ $REGEX ]]
+then printf "\n REGEX=$REGEX excluded \n\n" ; fi
+
+
+# save and change IFS to deal with spaces in filenames
+OLDIFS=$IFS
+IFS=$'\n'
+
+# find files and put them in an array
+N=0
+for i in $(find . -maxdepth 1 -type f -name "$1"  -mtime $MTIME) ; do
+     if ! [[ $i =~ $EXCLUDE ]] && ! [[ $i = $OLD ]] #&& ! [[ $i =~  $REGEX ]] 
+    then
+        FILES[$N]="$i"
+        echo "$i"
+        ((N++))
+    fi
+done
+
+for i in $(find . -maxdepth 1 -type f -name "$2"  -mtime $MTIME) ; do
+    if ! [[ $i =~ $EXCLUDE ]] && ! [[ $i = $OLD ]] #&& ! [[ $i =~  $REGEX ]]
+    then
+        FILES[$N]="$i"
+        echo "$i"
+        ((N++))
+    fi
+done  
+
+# restore IFS
+IFS=$OLDIFS
+
+
+# get length of the array
+tLen=${#FILES[@]}
+
+if   [[ $tLen -eq 0 ]]
+then
+   echo "
+    No files match.
+    Exiting...
+    "
+    exit 1
+fi
+
+echo "
+    $tLen files found."
+
+
+###   set name of OLD_DIR  using first and last filenames in array,
+###   removing non-alphanumeric characters.
+name1=$(echo "${FILES[0]}"  | sed 's/[^[:alnum:]]//g' |cut -c 1-11)
+name2=$(echo "${FILES[@]:(-1)}" | sed 's/[^[:alnum:]]//g' |cut -c 1-11)
+OLD_DIR=old_"$name1"_"$name2"_"$(date +%y-%m-%d)"
+
+
+# Test to make sure that OLD_DIR-0 does not already exist.
+# If it does, increment the count before creating it.
+INDEX=0
+if [[ -d  $OLD/$OLD_DIR-$INDEX ]]
+then 
+    until ! [[ -d $OLD/$OLD_DIR-$INDEX ]] ; do
+    ((INDEX+=1))
+    done
+    mkdir "$OLD_DIR-$INDEX"
+else
+    mkdir "$OLD_DIR-$INDEX"
+fi
+
+if ! [[ -d $OLD ]]
+then 
+	mkdir "$OLD"
+fi 
+
+
+# Ask to continue. If not, remove the directory that was just created above.
+echo -n "
+    Files will be moved to $OLD_DIR-$INDEX 
+    Continue?      (yes or no): "
+read answer
+case $answer in
+    [Yy]*) printf "\n ok \n\n" ;;
+        *) printf "\n Nothing moved. \n Exiting...\n\n" ; rmdir "$OLD_DIR-$INDEX" ; exit 1 ;;
+esac
+
+
+# Move the files
+mv "${FILES[@]}" "$OLD_DIR-$INDEX"
+
+
+# Move the new directory
+mv "$OLD_DIR-$INDEX" "$OLD"
+
+echo "Done!"
+
+
+exit 0
