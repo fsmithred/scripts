@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# while loop to give options for exiting:
+# There's now an option to restart the game,
+# in case you closed it by accident.
+# There's also an option to exit the script but 
+# keep the server running. Not sure what good that is,
+# but if you do that, and then run the script again, it restarts game.
+# Killing the server also removes the pid file.
+
+function get_out {
+while true; do
+    printf "  Kill the server?   
+             (y or k) Exit and kill the server. 
+             (n or q) Quit and keep server running.
+             (a or r) Play again.
+             "
+    read ans
+    case $ans in
+        [YyKk]*) echo "
+            Killing the server
+            "
+            kill $(cat tmp/frisk.pid) ; rm tmp/frisk.pid ; exit 0 ;;
+        [NnQq]*) echo "
+            Exiting. 
+            Server is still running.
+            "  ; exit 0 ;;
+        [AaRr]*) xfrisk localhost ;
+    esac
+done 
+}
+
+# If pid file exists (i.e. if server is running)
+# then just start the game. 
+# else start the server, store the pid in a file, then start game.
+
+
+if [[ -f tmp/frisk.pid ]]
+then    
+    echo "pid file exists"
+    xfrisk localhost 
+    get_out
+else    
+    friskserver >& tmp/log-friskserver &
+    sleep 1
+    my_pid="$!"
+    echo $my_pid > tmp/frisk.pid
+    echo "pid is $(cat tmp/frisk.pid)"
+    echo
+	printf "\n\n\t You may choose one or more AI players, or
+	\t you may continue to the game to play with 
+	\t humans, or you may hit ctrl-c to abort. 
+	\t Remember to kill the friskserver when you are finished playing. \n
+	"
+	
+	
+	printf	 " 
+	1) aiColson     4) aiColson_and_aiConway     7) All
+	2) aiConway     5) aiColson_and_aiDummy      8) Continue
+	3) aiDummy      6) aiConway_and_aiDummy
+	
+	\t Enter a number: "
+	
+	read ans
+	case $ans in
+	    1) aiColson localhost >& tmp/log-aiColson & ;;
+	    2) aiConway localhost >& tmp/log-aiConway & ;;
+	    3) aiDummy localhost >& tmp/log-aiDummy & ;;
+	    4) aiColson localhost >& tmp/log-aiColson & 
+	       aiConway localhost >& tmp/log-aiConway & ;;
+	    5) aiColson localhost >& tmp/log-aiColson & 
+	       aiDummy localhost >& tmp/log-aiDummy & ;;
+	    6) aiConway localhost >& tmp/log-aiConway &
+	       aiDummy localhost >& tmp/log-aiDummy & ;;
+	    7) aiColson localhost >& tmp/log-aiColson &
+	       aiConway localhost >& tmp/log-aiConway &
+	       aiDummy localhost >& tmp/log-aiDummy & ;;
+	    8) ;;
+	esac
+	
+	xfrisk localhost 
+    get_out
+fi
