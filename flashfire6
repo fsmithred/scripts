@@ -1,0 +1,81 @@
+#!/bin/bash
+# flashfire v.6
+# kill flash cookies 
+
+
+DIR1="/home/$USER/.macromedia/Flash_Player/#SharedObjects/"
+DIR2="/home/$USER/.macromedia/Flash_Player/macromedia.com/support/flashplayer/sys/"
+DIR3="/home/$USER/.adobe/Flash_Player/AssetCache/"
+
+
+function ask_delete {
+echo -n "
+    Delete these items? (Y/n) "
+read answer
+case ${answer:0:1} in
+    [Nn]) echo "skipping these" ;;
+    *) echo "
+    Deleting...
+    " ; rm -r *  
+sleep 1
+esac
+}
+
+
+# look for contents in first directory
+if [[ "$(ls -A $DIR1)" ]]; then
+    echo
+    echo "     Checking for flash cookies..."
+    sleep 1
+    cd "$DIR1"
+   for i in * ; do echo "$i" && ls "$i"  ; done
+    ask_delete
+    echo
+  else
+    echo "
+    Nothing to do; directory is empty.
+    (#SharedObjects)
+    "
+    sleep 1
+fi
+
+
+# look for contents in second directory
+if [[ "$(ls -A $DIR2)" ]]; then
+   echo
+   echo "     Checking for more junk..."
+   sleep 1
+   cd "$DIR2"
+   for i in * ; do echo "$i"  ; done
+   ask_delete
+   echo
+  else
+   echo
+   echo "Nothing to do; directory is empty."
+   echo "(support/flashplayer/sys)"
+   echo
+   echo
+   sleep 1
+fi
+
+
+# look for contents in third directory
+if [[ "$(ls -A $DIR3)" ]]; then
+   echo
+   echo "     One more place to check..."
+   sleep 1
+   cd "$DIR3"
+   for i in * ; do echo "$i" && ls -l "$i"  ; done
+   ask_delete
+   echo
+  else
+   echo
+   echo "Nothing to do; directory is empty."
+   echo "(AssetCache)"
+   echo
+   sleep 1
+fi
+
+echo "Done!"
+echo
+exit 0
