@@ -1,0 +1,79 @@
+#a) how to upload
+# mkdir <name of repo>
+# cd <name of repo>
+# git init
+# touch README
+# git commit -m 'first commit'
+# git remote add origin git@github.com:fsmithred/scripts.git
+# git push origin master
+
+
+b) how to upload again
+   1. Edit file(s)
+   2. git commit -a
+   3. git push origin master
+
+I kept getting this error when I tried to push:
+Git: push rejected non-fast forward
+
+Found the answer was to pull, then push, on this page:
+http://rip747.wordpress.com/2009/04/20/git-push-rejected-non-fast-forward/
+(page copied below)
+
+4. git pull git@github.com:fsmithred/Backup-scripts master
+5. git push git@github.com:fsmithred/Backup-scripts master
+   (or was it just 'git push origin master'?
+
+
+Add a file:
+git add FSR_01_backup.user_configs.sh
+git commit FSR_01_backup.user_configs.sh
+git push origin master
+
+Remove a file:
+1. Delete the local copy of the file.
+2. git commit -a
+3. git push origin master
+
+Remove a file: (I just did this and it worked.)
+1. Don't delete the local copy of the file.
+2. git rm <filename>
+3. git commit
+4. git push origin master
+
+
+-----------------------------
+ Posted in Git, TechSupport by rip747 on April 20, 2009
+
+When trying to do a push to a repo, you might encounter the following error:
+
+    $ git push github master
+    To git@gitproxy:rip747/cfwheels.git
+    ! [rejected]        master -> master (non-fast forward)
+    error: failed to push some refs to ‘git@gitproxy:rip747/cfwheels.git’
+
+Don’t panic, this is extremely easy to fix. All you have to do is issue a pull and your branch will be fast-forward:
+
+    $ git pull github master
+    From git@gitproxy:rip747/cfwheels
+    * branch            master     -> FETCH_HEAD
+    Already uptodate!
+    Merge made by recursive.
+
+Then retry your push and everything should be fine:
+
+    $ git push github master
+    Counting objects: 44, done.
+    Compressing objects: 100% (32/32), done.
+    Writing objects: 100% (32/32), 6.30 KiB, done.
+    Total 32 (delta 23), reused 0 (delta 0)
+    To git@gitproxy:rip747/cfwheels.git
+    1717535..1406e8c  master -> master
+
+UPDATE: I ran into another instance of this that the solution above didn’t solve and have provided a solution below.
+
+Another situation where you might run into this, is if you’re tracking a branch that is not the same name as the remote. For instance, say you have a remote branch called otherrepo/master and you already have a local master branch, so you checkout the otherrepo/master branch as othermaster locally. Now even though you do a pull, when you go to push, you will get the rejected error.
+
+To get around this, you will have to specify the local branch in the push command using a colon (:) like so:
+
+    git push otherrepo othermaster:master
