@@ -1,0 +1,61 @@
+#!/bin/bash
+# flashfire v.5.01
+# kill flash cookies
+
+
+DIR1="/home/$USER/.macromedia/Flash_Player/#SharedObjects/"
+DIR2="/home/$USER/.macromedia/Flash_Player/macromedia.com/support/flashplayer/sys/"
+DIR3="/home/$USER/.adobe/Flash_Player/AssetCache/"
+
+
+# look for contents in first directory.
+if [[ "$(ls -A $DIR1)" ]]; then
+   echo
+   echo "Removing flash cookies..."
+   cd "$DIR1"
+   for i in * ; do ls "$i" && rm -r "$i" ; done
+   sleep 1
+   echo
+  else
+   echo
+   echo "Nothing to do; directory is empty."
+   echo "(#SharedObjects)"
+   echo
+   sleep 1
+fi
+
+if [[ "$(ls -A $DIR2)" ]]; then
+   echo
+   echo "Removing more junk..."
+   cd "$DIR2"
+   for i in * ; do echo "$i" && rm -r "$i" ; done
+   sleep 1
+   echo
+  else
+   echo
+   echo "Nothing to do; directory is empty."
+   echo "(support/flashplayer/sys)"
+   echo
+   echo
+   sleep 1
+fi
+
+if [[ "$(ls -A $DIR3)" ]]; then
+   echo
+   echo "One more place to check..."
+   cd "$DIR3"
+   for i in * ; do echo "$i" && ls "$i" && rm -r "$i" ; done
+   sleep 1
+   echo
+  else
+   echo
+   echo "Nothing to do; directory is empty."
+   echo "(AssetCache)"
+   echo
+   sleep 1
+fi
+
+echo "Done!"
+echo
+sleep 2
+exit 0
