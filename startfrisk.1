@@ -8,7 +8,7 @@
 # but if you do that, and then run the script again, it restarts game.
 # Killing the server also removes the pid file.
 
-logdir=$HOME/.xfrisk
+logdir="$HOME"/.xfrisk
 
 function get_out {
 while true; do
@@ -22,7 +22,7 @@ while true; do
         [YyKk]*) echo "
             Killing the server
             "
-            kill $(cat $logdir/frisk.pid) ; rm $logdir/frisk.pid ; exit 0 ;;
+            kill $(cat "$logdir"/frisk.pid) ; rm "$logdir"/frisk.pid ; exit 0 ;;
         [NnQq]*) echo "
             Exiting. 
             Server is still running.
@@ -34,9 +34,9 @@ done
 
 
 # make sure logdir exists
-if ! [[ -d $logdir ]]
+if ! [[ -d "$logdir" ]]
 then
-    mkdir $logdir
+    mkdir "$logdir"
 fi
 
 
@@ -45,17 +45,17 @@ fi
 # else start the server, store the pid in a file, then start game.
 
 
-if [[ -f $logdir/frisk.pid ]]
+if [[ -f "$logdir"/frisk.pid ]]
 then    
     echo "pid file exists"
     xfrisk localhost 
     get_out
 else    
-    friskserver >& $logdir/log-friskserver &
+    friskserver >& "$logdir"/log-friskserver &
     sleep 1
     my_pid="$!"
-    echo $my_pid > $logdir/frisk.pid
-    echo "pid is $(cat $logdir/frisk.pid)"
+    echo $my_pid > "$logdir"/frisk.pid
+    echo "pid is $(cat "$logdir"/frisk.pid)"
     echo
 	printf "\n\n\t You may choose one or more AI players, or
 	\t you may continue to the game to play with 
@@ -73,18 +73,18 @@ else
 	
 	read ans
 	case $ans in
-	    1) aiColson localhost >& $logdir/log-aiColson & ;;
-	    2) aiConway localhost >& $logdir/log-aiConway & ;;
-	    3) aiDummy localhost >& $logdir/log-aiDummy & ;;
-	    4) aiColson localhost >& $logdir/log-aiColson & 
-	       aiConway localhost >& $logdir/log-aiConway & ;;
-	    5) aiColson localhost >& $logdir/log-aiColson & 
-	       aiDummy localhost >& $logdir/log-aiDummy & ;;
-	    6) aiConway localhost >& $logdir/log-aiConway &
-	       aiDummy localhost >& $logdir/log-aiDummy & ;;
-	    7) aiColson localhost >& $logdir/log-aiColson &
-	       aiConway localhost >& $logdir/log-aiConway &
-	       aiDummy localhost >& $logdir/log-aiDummy & ;;
+	    1) aiColson localhost >& "$logdir"/log-aiColson & ;;
+	    2) aiConway localhost >& "$logdir"/log-aiConway & ;;
+	    3) aiDummy localhost >& "$logdir"/log-aiDummy & ;;
+	    4) aiColson localhost >& "$logdir"/log-aiColson & 
+	       aiConway localhost >& "$logdir"/log-aiConway & ;;
+	    5) aiColson localhost >& "$logdir"/log-aiColson & 
+	       aiDummy localhost >& "$logdir"/log-aiDummy & ;;
+	    6) aiConway localhost >& "$logdir"/log-aiConway &
+	       aiDummy localhost >& "$logdir"/log-aiDummy & ;;
+	    7) aiColson localhost >& "$logdir"/log-aiColson &
+	       aiConway localhost >& "$logdir"/log-aiConway &
+	       aiDummy localhost >& "$logdir"/log-aiDummy & ;;
 	    8) ;;
 	esac
 	
