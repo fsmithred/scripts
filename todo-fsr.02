@@ -112,7 +112,7 @@ while [[ $1 == -* ]]; do
     case "$1" in
       -a) append_entry ;;
       -d) recall_due ;;
-      -w) word="$2" ; echo "word=$word" ; recall_alpha_date ;;
+      -w) word="$2" ; recall_alpha_date ;;
       -k) recall_keyword ;;
       -r) tag=$2 ; recall_tags   ;;
       -l) "$pager" "$tasklist" ; exit 0 ;;
