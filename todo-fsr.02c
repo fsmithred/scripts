@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+# Changelog - todo-fsr.02c 
+# Date is free-form
+# Reorganized help text
+# keyword for -k (recall) goes on command line
+# due date for -d (recall) goes on command line
+
+#TODO: 
+# figure out how make an entry on command line (no questions)
+# sort output.   'echo "$line" | sort -h' doesn't work.
+# figure out how to delete a single entry. This might require - DONE! BAD!!!
+# numbering the entries. If so, DO THIS SOON.
+# OK, that was easy. Now figure out how to delete an entry 
+# with the next entry getting a number that already exists. FUCK!
+
+# ***** Uncomment and test line 147 if you dare. *****
+
+# Variables - these can be edited to suit your needs.
+
+tasklist=tasklist
+pager=/usr/bin/less
+editor=/usr/bin/nano
+
+# format for tasklist
+# tag : due-date : text : entry date
+
+# todo -a  
+function append_entry {
+    tag=
+    duedate=
+    text=
+    echo "Tag: "
+    read tag
+    echo "Date task is due.  (use *any* format): "
+    read duedate
+    echo "Message: "
+    read text
+    ddt=$(date --date="$duedate" +%F)
+    index=$(wc -l $tasklist | awk '{print $1}')
+    ((index+=1))
+    until ! $(grep -q ";$index;" "$tasklist")
+      do
+      ((index+=1))
+    done
+    echo "$tag : $ddt : ;$index; : $text : Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+exit 0
+}
+
+# todo -r <tag>
+function recall_tags {
+    while read line
+    do
+      if  [[ "${line:0:1}" = "$tag" ]]     ##### This works - $tag is defined in the loop for command options 
+      then
+          echo "$line" | sort -h
+      fi      
+    done < "tasklist"
+exit 0
+}
+
+# todo -d <due date>
+function recall_due {
+    while read line
+    do
+      if  [[ "${line:4:10}" = "$ddt" ]]
+      then
+          echo "$line"
+      fi      
+done < "tasklist"
+exit 0
+}	
+
+# todo -k <key words>
+function recall_keyword {
+	while read line
+	do
+	  grep "$key"
+	done < "tasklist"
+exit 0
+}
+
+function recall_word_date {
+   grep "\: $word \:" tasklist 
+exit 0
+}
+
+function show_help {
+	echo "$help_text" #| "$pager" # uncomment pager if help gets too long.
+    exit 0
+}
+
+help_text="
+   Usage: $0  <option>
+   
+   valid options: 
+       -a                 add/append entry to task list. 
+                          Tags should be a single alphanumeric character for now.
+                          Date can be free-form (see below).
+                          Message is free-form text.                          
+
+       -d <due date>      recall entries by due date, including free-form dates
+                          like \"next Wed\" or \"next month\" (without quotes)
+                          or 11/15 or Nov 15, or 21Dec2012 or Dec 21, 2012.
+
+       -del <num>         delete a line by its index number
+
+       -e                 edit the task list. Change the editor variable if desired.
+                          The default is nano.  
+
+       -h, --help, -?,    show this help message
+
+       -k <key words>     recall entries by keyword or phrase
+
+       -l                 list all entries. Change the pager variable if desired. 
+                          The default is less.
+
+       -r <tag>           recall entries by tag
+
+       -w <word>          recall entries with word date, like \"none\" or \"when it's done\" 
+                          This can be used as another form of tag or keyword instead of a due date.
+                          This option may soon be deprecated."
+
+clear; date
+echo 
+
+if [[ -z "$*" ]]
+then
+    echo "
+    Missing option
+    See $0 -h for full help.
+    "
+fi
+
+if [[ "$1" = "-r" ]]  && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -r <tag>
+    "
+    exit 1
+fi
+        
+while [[ $1 == -* ]]; do
+    case "$1" in
+      -a) append_entry ;;
+      -d) shift ; duedate="$*" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
+#      -del) ln="$2" ; sed -i "/;$ln;/d" "tasklist" ; echo "Entry $ln deleted" ; exit 0 ;; 
+      -w) word="$2" ; recall_word_date ;;
+      -k) key="$2" ; recall_keyword ;;
+      -r) tag="$2" ; recall_tags   ;;
+      -l) "$pager" "$tasklist" ; exit 0 ;;
+      -e) "$editor" "$tasklist" ; exit 0 ;;
+      -h|--help|-\?) show_help; exit 0;;
+       *) echo "
+    invalid option: $1
+    
+    See $0 -h for full help.
+    "
+    
+                1>&2; exit 1;;
+    esac
+done
