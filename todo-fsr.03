@@ -74,8 +74,21 @@ function del_line {
     sleep 1
 	sed  -i~ "$ln"'d'  "$tasklist"
     nl "$tasklist"
-exit 0
 } 
+
+function ask_del {
+while true ; do
+    echo "
+    Delete another line?
+    (y,N)
+    "
+    read answer
+    case "$answer" in
+      [Yy]) del_line ;;
+         *) exit 0 ;;
+    esac
+done
+}
 
 function recall_word_date {
    grep "\: $word \:" tasklist 
@@ -105,6 +118,8 @@ help_text="
        -d <due date>      recall entries by due date, including free-form dates
                           like \"next Wed\" or \"next month\" (without quotes)
                           or 11/15 or Nov 15, or 21Dec2012 or Dec 21, 2012.
+                          (N.B. Dates with spaces are acceptable for recall,
+                          but to add/append, you must quote dates with spaces.)
                           Using -d without any argument will display tasks due
                           today.
 
@@ -150,7 +165,7 @@ while [[ $1 == -* ]]; do
     case "$1" in
       -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$@" ; ddt=$(date --date="$duedate" +%F) ; append_entry ;;
       -d) shift ; duedate="$@" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
-      -x|-del|--del) del_line ;;
+      -x|-del|--del) del_line ; ask_del ;;
       -w) word="$2" ; recall_word_date ;;
       -k) key="$2" ; recall_keyword ;;
       -r) tag="$2" ; recall_tags   ;;
