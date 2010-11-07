@@ -94,7 +94,8 @@ help_text="
        -a                 add/append entry to task list. 
                           Format for entry is:
                               todo -a <tag> <due date> <message>
-                          Any fields with spaces in them should be quoted.
+                          If the date field has spaces, it should be quoted. The
+                          message field doesn't need quotes. Don't leave a field blank.
                           Tags should be a single alphanumeric character for now,
                           or you may test other characters or longer strings and
                           let me know your results.
@@ -147,7 +148,7 @@ fi
         
 while [[ $1 == -* ]]; do
     case "$1" in
-      -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$1" ; ddt=$(date --date="$duedate" +%F) ; append_entry ;;
+      -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$@" ; ddt=$(date --date="$duedate" +%F) ; append_entry ;;
       -d) shift ; duedate="$@" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
       -x|-del|--del) del_line ;;
       -w) word="$2" ; recall_word_date ;;
