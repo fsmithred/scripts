@@ -71,10 +71,9 @@ function del_line {
 	: "
 	read ln
 	echo "Entry $ln will be deleted"
-    sleep 2
+    sleep 1
 	sed  -i~ "$ln"'d'  "$tasklist"
     nl "$tasklist"
-    echo "Entry $ln deleted" 
 exit 0
 } 
 
@@ -108,9 +107,8 @@ help_text="
                           Using -d without any argument will display tasks due
                           today.
 
-       -del <num>         delete a line by its index number
-                          Maybe this should be -x, for less typing
-
+       -x, -del           delete a line from the task list
+                          
        -e                 edit the task list. Change the editor variable if desired.
                           The default is nano.  
 
@@ -151,7 +149,7 @@ while [[ $1 == -* ]]; do
     case "$1" in
       -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$1" ; ddt=$(date --date="$duedate" +%F) ; append_entry ;;
       -d) shift ; duedate="$@" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
-      -del) del_line ;;
+      -x|-del|--del) del_line ;;
       -w) word="$2" ; recall_word_date ;;
       -k) key="$2" ; recall_keyword ;;
       -r) tag="$2" ; recall_tags   ;;
