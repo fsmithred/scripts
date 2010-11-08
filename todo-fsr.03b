@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# Changelog - todo-fsr.03a
+
+# CHECK PATHS AND FILENAMES BEFORE RUNNING - THIS IS MY TEST COPY!!!!!
+
+#TODO: 
+#    done - config file in .taskrc
+#    done - use env variable for editor and pager, fall back if none 
+#    done - sanity check for date
+#    done - make tmpfile a variable, and put it in the hidden dir
+# propagate filename changes throughout script 
+#    (tmplist done;    tasklist, pager, editor?)
+
+#WISHLIST
+# add a deleter/reminder for stuff which is already in the past
+# Export sorted lists to file
+# Find a use for date-of-entry field?
+
+## Is this needed? How will user get taskferrc 
+## file into .taskfer/ ?? Unpack a tarball?
+if ! [[ -d $HOME/test/todo/.taskfer ]] ; then
+    mkdir $HOME/test/todo/.taskfer
+fi
+
+function taskfer_configuration {
+    if [[ -f $HOME/test/todo/.taskfer/taskferrc ]] ; then
+        source $HOME/test/todo/.taskfer/taskferrc
+    fi
+#
+#    # check for values in $HOME/.taskfer/taskferrc and use them.
+#    # if any are unset, this will set them.
+    tasklist=${tasklist:="$HOME/test/todo/.taskfer/tasklist"}
+    tmplist=${tmplist:="$HOME/test/todo/.taskfer/tmplist"}
+    pager=${pager:=$(which less)}
+    editor=${editor:=$(which vim)}
+}
+
+taskfer_configuration
+
+# Variables - these can be edited to suit your needs.
+
+#tasklist=tasklist
+#pager=/usr/bin/less
+#editor=/usr/bin/nano
+
+
+# format for tasklist
+# tag : due-date : text : entry date
+
+# todo -a  
+
+function test_date {
+    if (("$d1" < "$d0"))
+    then echo " 
+      Due date is in the past!
+      Are you sure you want to continue?
+      (y,N): "
+      read answer
+      case "$answer" in
+          [Yy]) append_entry ;;
+             *) exit 0 ;;
+      esac
+    else
+      append_entry
+    fi
+}
+
+function append_entry {
+     echo "$tag : $ddt : $text : Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+exit 0
+}
+
+function recall_tags {
+while read line ; do
+    if [[ -n $(echo $line | cut -d":" -f1 | grep $tag) ]] ; then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    cat "$tmplist" | sort -n  | $pager
+    rm "$tmplist"
+exit 0
+}
+
+function recall_due {
+while read line ; do
+    if [[ -n $(echo $line | cut -d":" -f2 | grep $ddt) ]] ; then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    cat "$tmplist" | sort -n | $pager
+    rm "$tmplist"
+exit 0
+}
+
+function recall_keyword {
+    while read line
+    do
+      grep "$key" | sort -n
+    done < "$tasklist"
+exit 0
+}
+
+function del_line {
+    ln=
+    nl "$tasklist" 
+    echo "
+    Enter line number to delete
+    : "
+    read ln
+    echo "Entry $ln will be deleted"
+    sleep 1
+    sed  -i~ "$ln"'d'  "$tasklist"
+    nl "$tasklist"
+} 
+
+function ask_del {
+while true ; do
+    echo "
+    Delete another line?
+    (y,N)
+    "
+    read answer
+    case "$answer" in
+      [Yy]) del_line ;;
+         *) exit 0 ;;
+    esac
+done
+}
+
+function recall_word_date {
+   grep "\: $word \:" tasklist 
+exit 0
+}
+
+function show_help {
+    echo "$help_text" 
+    exit 0
+}
+
+help_text="\n 
+  Usage: $0  <option> [arguments]\n
+  valid options: 
+       -a                 add/append entry to task list. Free-form dates with
+                          spaces need to be quoted. 
+                              todo -a <tag> <due-date> <message>
+                          
+       -d [due date]      recall entries by due date, quotes not needed.
+                          No argument shows tasks due today.
+
+       -x, -del           delete a line from the task list
+                          
+       -e                 edit the task list. 
+
+       -h, --help, -?,    display this help and exit
+
+       -k <key words>     recall entries by keyword or phrase
+
+       -l                 list all entries. 
+
+       -t <tag>           recall entries by tag
+       
+       "
+       
+clear; date
+echo 
+
+if [[ -z "$*" ]]
+then
+    echo "
+    Missing option
+    $0 -h for full help.
+    "
+fi
+
+if [[ "$1" = "-r" ]]  && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -r <tag>
+    "
+    exit 1
+fi
+        
+while [[ $1 == -* ]]; do
+    case "$1" in
+      -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$@" 
+            ddt=$(date --date="$duedate" +%F) ; d1=$(date --date=$ddt +%s) ; d0=$(date --date=today +%s) ; test_date ;;
+      -d) shift ; duedate="$@" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
+      -x|-del|--del) del_line ; ask_del ;;
+      -w) word="$2" ; recall_word_date ;;
+      -k) key="$2" ; recall_keyword ;;
+      -r) tag="$2" ; recall_tags   ;;
+      -l) cat "$tasklist" | sort -h | "$pager"  ; exit 0 ;;
+      -e) "$editor" "$tasklist" ; exit 0 ;;
+      -h|--help|-\?) show_help; exit 0;;
+      -t) tag="$2" ; recall_tags ;;
+       *) echo "
+    invalid option: $1
+    
+    $0 -h for full help.
+    "
+    
+                1>&2; exit 1;;
+    esac
+done
