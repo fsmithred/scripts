@@ -1,0 +1,374 @@
+#!/usr/bin/env bash
+# todo-fsr.03d.4
+
+#Changes in .03d4
+# Use no argument to make an entry. You'll be promted to enter all 
+# fields, separated by semi-colons. No quotes are needed for free-form
+# dates or for text, even with parentheses. Don't use semi-colons in 
+# your text, or the text field will be cut short. If you don't like 
+# that, change the field separator on line 330 and in awk around 
+#lines 332, 333, and 335, or convince me to do it. I'm undecided.
+
+
+
+# Changes in .03d3
+# Fixed bug in todo -x (to delete a line)
+# If you entered nothing, it deleted all lines
+# in the tasklist. Better now.
+
+
+# Changes in .03d
+# Interactive entry (-i) asks question for each field.
+# Recall range of dates. (-w)
+# Delete lines without having to answer yes after each one. (-y)
+# Almost: delete all entries with old due dates.
+
+
+
+#TODO: 
+# propagate filename changes throughout script 
+#    (tmplist done;    tasklist, pager, editor?)
+# Figure out how to pad the tags, so the fields line up.
+
+#  *** add a deleter/reminder for stuff which is 
+# already in the past - Almost!!! ***
+
+# *** Question: ***  is output for deleting an entry better reversed,
+# so that the oldest entries are at the bottom? It's not a problem in
+# a terminal, but it might be a problem in a console.
+
+#WISHLIST
+# Export sorted lists to file?
+# Find a use for date-of-entry field?
+
+
+
+if ! [[ -d $HOME/.taskfer ]] ; then
+    mkdir $HOME/.taskfer
+fi
+
+function taskfer_configuration {
+    if [[ -f $HOME/.taskfer/taskferrc ]] ; then
+        source $HOME/.taskfer/taskferrc
+    fi
+#
+#    # check for values in $HOME/.taskfer/taskferrc and use them.
+#    # if any are unset, this will set them.
+    tasklist=${tasklist:="$HOME/.taskfer/tasklist"}
+    tmplist=${tmplist:="$HOME/.taskfer/tmplist"}
+    pager=${pager:=$(which less)}
+    editor=${editor:=$(which vim)}
+}
+
+taskfer_configuration
+
+function test_date {
+    if (("$d1" < "$d0"))
+    then echo " 
+      Due date is in the past!
+      Are you sure you want to continue?
+      (y,N): "
+      read answer
+      case "$answer" in
+          [Yy]) append_entry ;;
+             *) exit 0 ;;
+      esac
+    else
+      append_entry
+    fi
+}
+
+function append_entry {
+     echo "$tag : $ddt : $text : Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+exit 0
+}
+
+function ask_entry {
+    tag=
+    duedate=
+    text=
+    echo "Tag: "
+    read tag
+    echo "Date task is due.  (use *any* format): "
+    read duedate
+    echo "Message: "
+    read text
+    ddt=$(date --date="$duedate" +%F)
+    echo "$tag : $ddt : $text : Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+exit 0
+}
+
+function recall_tags {
+while read line ; do
+    if [[ -n $(echo $line | cut -d":" -f1 | grep $tag) ]] ; then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    cat "$tmplist" | sort -n  | $pager
+    rm "$tmplist"
+exit 0
+}
+
+function recall_due {
+while read line ; do
+    if [[ -n $(echo $line | cut -d":" -f2 | grep $ddt) ]] ; then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    cat "$tmplist" | sort | $pager
+    rm "$tmplist"
+exit 0
+}
+
+
+# start with today, recall due, then increment the date by 1 day
+# $days is defined down in the options loop. If no argument is provided
+# for the -w option, it defaults to 8. Otherwise, it's whatever number
+# of days provided on the command line. -w 3 will return today plus 3 
+function recall_week {
+    count=0
+    ddt=$(date +%Y-%m-%d)
+    until [[ "$count" = "$days" ]] ; do
+        while read line ; do
+          if [[ -n $(echo $line | cut -d":" -f2 | grep  $ddt) ]] ; then
+          echo "$line" >> "$tmplist"
+          fi
+        done < "$tasklist"
+      ddt=$(date --date="$ddt + 1 day" +%Y-%m-%d)
+      ((count+=1))
+    done
+    cat "$tmplist" | sort -t: -k2 | "$pager"
+    rm "$tmplist"        
+exit 0
+}
+
+function recall_keyword {
+    while read line
+    do
+      grep "$key" | sort -n
+    done < "$tasklist"
+exit 0
+}
+
+function ask_del {
+while true ; do
+    echo "
+    Delete a line?
+    (y,N)
+    "
+    read answer
+    case "$answer" in
+      [Yy]) del_lines ;;
+         *) exit 0 ;;
+    esac
+done
+}
+
+# Deletes nothing if number entered is greater than
+# the actual number of lines. Or if you enter a number and letter
+# Good up to 9999 lines.
+# This is now -x, and -y is gone. List displays oldest at bottom. 
+#
+# Synopsis: display the list with line numbers, in reverse order
+# Ask which line to delete, read the answer, if none, run ask_del
+# If answer, check for up to four digits, then delete that line,
+# and then run ask_del to see if you want to delete another.
+# Anything other than numeric answer exits the script.
+function del_lines {
+while true ; do
+    ln=
+    nl "$tasklist" | sort -rn
+    echo "
+    Enter line number to delete,
+    : "
+    read ln
+    if  [[ -z "$ln" ]]
+        then
+          echo "Nothing was entered"
+          ask_del
+    else
+      case "$ln" in
+      [0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]) echo "Entry $ln will be deleted"
+            sleep 1
+            sed -i~ "$ln"'d'  "$tasklist" 
+            ask_del ;;
+       *) exit 0 ;;
+    esac
+    fi
+done
+}
+
+# right now, this just echoes the old entries with line numbers into a file
+# Synopsis: runs the tasklist through nl -s: to give it numbers followed
+# by a colon. Start with d0 as yesterday, so we don't lose any of today's
+# entries, and convert to seconds.
+# Read the lines, the due date (ddt) is now in the third field. Echo and
+# cut to get $ddt, then convert it to seconds to define $d1. Test if
+# due date is less than yesterday (more than a day in the past). If so,
+# echo the line to olddentries file. Then fail to delete that line with
+# sed three different ways. Shit.
+# A workaround for this is to reverse the test and echo the results into
+# current_entries file, and replace the tasklist with current_entries.
+
+#function clean_old {
+#d0=$(date --date=yesterday +%s)
+#while read line ; do
+#    cat "$tasklist" | nl -s: > tmplist
+#    ddt=$(echo $line | cut -d":" -f3)
+#    d1=$(date --date="$ddt" +%s)
+#        if (("$d1" < "$d0"))
+#        then
+#        echo "$line" >> oldentries
+#        ln=$(echo $line | cut -d":" -f1)
+#        echo "about to remove line $ln"
+#        sleep 2
+#        sed -i~ "$ln"'d' "$tasklist"   # didn't work
+#        echo "we got past sed on line number $ln"
+#        sed -i~ "$line"'d' "$tasklist"   # didn't work
+#        sed -i~  '/$line/d' "$tasklist"  # didn't work
+#        fi
+#done < tmplist
+#cat oldentries
+#echo "=================="
+#cat "$tasklist"
+#exit 0
+#}
+
+# Couldn't get this way to work, either. sed wipes out the list.
+#function clean_old {
+#
+#index=0
+#d0=$(date --date=yesterday +%s)
+#while read line ; do
+#cat "$tasklist" | nl -s: > tmplist
+#ddt=$(echo $line | cut -d":" -f3)
+#    d1=$(date --date="$ddt" +%s)
+#        if (($d1 < $d0))
+#        then
+#echo "$line" # >> oldentries.txt
+#        linenum=$(echo $line | cut -d":" -f1)
+#        del_list[$index]=$linenum
+#((index+=1))
+#echo "${del_list[@]}"
+#sleep 1
+#for e in "${del_list[@]}"
+#do
+##sed -i~ "$e"'d' "$tasklist"
+#done
+## sed -i~ "$linenum"'d' "$tasklist" # didn't work
+## sed -i~ "$line"'d' "$tasklist" # didn't work
+## sed -i~ '/$line/d' "$tasklist" # didn't work
+#        fi
+#done < tmplist
+#cat oldentries.txt
+#exit 0
+#}
+
+
+### same as above, but reverse test and select for current entries
+function clean_old {
+cat "$tasklist" | nl -s: > tmplist
+d0=$(date --date=yesterday +%s)
+while read line ; do
+    ddt=$(echo $line | cut -d":" -f3)
+    d1=$(date --date="$ddt" +%s)
+        if (("$d1" > "$d0"))
+        then
+        echo "$line" >> current_entries
+#        linenum=$(echo $line | cut -d":" -f1)
+        fi
+done < tmplist
+    mv current_entries "$tasklist"
+exit 0
+}
+
+function show_help {
+    echo "$help_text" 
+    exit 0
+}
+
+help_text="\n 
+  Usage: $0  <option> [arguments]\n
+  valid options: 
+    -a              add/append entry to task list. Free-form dates with
+                    spaces need to be quoted. Message may need quotes.
+                        todo -a <tag> <due-date> <message>
+
+    -d [due date]   recall entries by due date, quotes not needed.
+                    No argument shows tasks due today.
+
+    -x, -del        delete a line from the task list
+
+    -e              edit the task list. 
+
+    -h, --help      display this help and exit
+
+    -i              interactive entry
+
+    -k <keywords>   recall entries by keyword or phrase
+
+    -l              list all entries. 
+
+    -t <tag>        recall entries by tag
+
+    -w  [n]         recall next [n] days; default 8 (incl. today)
+    
+    -clean          removes entries older than today
+                    (back up tasklist first, please!)
+     "
+       
+clear; date
+echo 
+
+if [[ -z "$*" ]]
+then
+    echo "
+    Enter all fields, separated by semi-colon.
+    <tag> ; <due date> ; <message>
+    "
+    read line
+        if [[ $line == *\;*\;* ]]
+        then
+            tag=$(echo "$line" | awk -F ";" '{ print $1 }')
+            duedate=$(echo "$line" | awk -F ";" '{ print $2 }')
+            ddt=$(date --date="$duedate" +%F)
+            text=$(echo "$line" | awk -F ";" '{ print $3 }')
+            echo "$tag : $ddt : $text : Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+            echo "$tag : $ddt : $text : Entered on $(date +%Y-%m-%d)"
+        else 
+            echo "nothing was entered
+            " ; exit 0
+        fi
+fi
+
+if [[ "$1" = "-t" ]]  && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -t <tag>
+    "
+    exit 1
+fi
+        
+while [[ $1 == -* ]]; do
+    case "$1" in
+      -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$@" 
+            ddt=$(date --date="$duedate" +%F) ; d1=$(date --date=$ddt +%s) ; d0=$(date --date=today +%s) ; test_date ;;
+      -d) shift ; duedate="$@" ; ddt=$(date --date="$duedate" +%F) ; recall_due ;;
+      -x|-del|--del) del_lines ;;
+      -e) "$editor" "$tasklist" ; exit 0 ;;
+      -h|--help|-\?) show_help; exit 0;;
+      -i) ask_entry ;;
+      -k) key="$2" ; recall_keyword ;;
+      -l) cat "$tasklist" | sort -t: -k2 | "$pager"  ; exit 0 ;;
+      -t) tag="$2" ; recall_tags ;;
+      -w) if [[ "$2" ]] ; then days="$2" ; else days=8 ; fi ; recall_week ;;
+      -clean) clean_old ;;
+       *) echo "
+    invalid option: $1
+    
+    $0 -h for full help.
+    "
+                1>&2; exit 1;;
+    esac
+done
