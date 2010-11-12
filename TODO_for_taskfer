@@ -1,0 +1,100 @@
+TODO list for todo.sh
+
+
+
+#TODO: 
+
+### MOVE TAGS in the tasklist after the message, so they can be different lengths without spoiling the view.
+# Multiple tags per entry??? 
+
+# propagate filename changes throughout script 
+#    (tmplist done;    tasklist, pager, editor?)
+# Figure out how to pad the tags, so the fields line up.
+
+#  *** add a deleter/reminder for stuff which is 
+# already in the past - Almost!!! ***
+# This actually works in .03d.5, but I don't like the fact
+# that it just replaces the file. I wanted to edit the file inline
+# with sed. Maybe I'm just being picky.
+
+# *** Question: ***  is output for deleting an entry better reversed,
+# so that the oldest entries are at the bottom? It's not a problem in
+# a terminal, but it might be a problem in a console.
+
+#WISHLIST
+# Export sorted lists to file?
+# Find a use for date-of-entry field?
+# Display entries by date they were entered? Is this on anyone's wishlist?
+
+
+# Changes in .03d.5
+#
+# Added test to recall functions to get rid of error message if
+# no tmpfile gets created (if no entries match the recall).
+#
+# New variable, $taskfer_dir = $HOME/.taskfer - makes it easier
+# to use a different directory for taskferrc, tmpfile and tasklist.
+#
+# Recalls (-d, -l, -t, -w)  no longer show "Entered on..." 
+# or the colons between fields.
+#
+# Recall tags (-t) no longer shows the tag. If your memory is that short,
+# a task manager won't help.
+#
+# Clean old entries at once (-clean) works, but it's not the solution
+# I wanted. It selects newer entries and replaces the task list file,
+# while making a dated backup copy of the old task list. 
+
+
+#Changes in .03d4
+# Use no argument to make an entry. You'll be promted to enter all 
+# fields, separated by semi-colons. No quotes are needed for free-form
+# dates or for text, even with parentheses. Don't use semi-colons in 
+# your text, or the text field will be cut short. If you don't like 
+# that, change the field separator on line 330 and in awk around 
+#lines 332, 333, and 335, or convince me to do it. I'm undecided.
+
+# Changes in .03d3
+# Fixed bug in todo -x (to delete a line)
+# If you entered nothing, it deleted all lines
+# in the tasklist. Better now.
+
+
+# Changes in .03d
+# Interactive entry (-i) asks question for each field.
+# Recall range of dates. (-w)
+# Delete lines without having to answer yes after each one. (-y)
+# Almost: delete all entries with old due dates.
+
+
+
+
+
+
+
+
+Notes about v.03b
+Sanity check for dates works. If you enter a date in the past, it warns you and asks if you want to proceed.
+Nadir figured out how to specific fields, and that code allows more than one character in the tag field.
+Sorting is still a problem. Even with 'sort -n' or 'sort -h' it still sorts the tag field first. 
+Some punctuation in the text field causes pukage. If that happens, put quotes around the text entry.
+Semi-colons and parentheses do it. I don't know what else.
+
+
+
+Note about the name.
+I've been calling it todo.  Telemachus started using tasker. There's alreay an android app called tasker. There's also one called task that's in the debian repos. There's also a tasky and a tasque. I came up with taskfer. Nadir likes it. So I started using it inside the script.
+Taskfer carries your tasks. I wish it would do mine for me.
+
+
+
+These are done except for the colors. That seems to be inconsistent.
+
+- Done - Figure out how to do somthing like:
+    if x is in field y, do something
+- Right now, the script exits after it does almost any task. Should it keep running?
+ e.g. Done - Maybe for deleting a line, it should loop and ask if you want to delete another.
+      (Put a while loop in the function)
+- Disable colors in my nano. Holy shit.
+
+
