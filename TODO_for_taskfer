@@ -4,18 +4,34 @@ TODO list for todo.sh
 
 #TODO: 
 
+@@@@@ IMPORTANT!!! date_test anomaly:
+when you convert to seconds, using "today" as the date keeps changing,
+but using a number, like 11/13 stays the same, and is a smaller number
+than "today". Today is now.
+d0=$(date --date=today +%s) NOW!
+d0=$(date +%s) no, this keeps changing, too.
+This didn't work, either:
+dom=$(date +%d)
+d0=$(date --date=dom +%s)
+Solution: Today is yesterday ; d0=$(date --date=yesterday +%s) until further notice
+
+
+Playing with formatting:
+Now using printf in the output of todo -d (recall by due date)
+Tags can be up to six characters without screwing with the alignment.
+
+
+
+# 
+
+# this one doesn't go away when you quit the pager
+# geometry is set for upper left of second monitor
+#xfce4-terminal --geometry 67x10+1280+0 --hold -e 'cal -3'
+
 ### MOVE TAGS in the tasklist after the message, so they can be different lengths without spoiling the view.
 # Multiple tags per entry??? 
 
-# propagate filename changes throughout script 
-#    (tmplist done;    tasklist, pager, editor?)
 # Figure out how to pad the tags, so the fields line up.
-
-#  *** add a deleter/reminder for stuff which is 
-# already in the past - Almost!!! ***
-# This actually works in .03d.5, but I don't like the fact
-# that it just replaces the file. I wanted to edit the file inline
-# with sed. Maybe I'm just being picky.
 
 # *** Question: ***  is output for deleting an entry better reversed,
 # so that the oldest entries are at the bottom? It's not a problem in
@@ -27,7 +43,22 @@ TODO list for todo.sh
 # Display entries by date they were entered? Is this on anyone's wishlist?
 
 
-# Changes in .03d.5
+# CHANGES in .03d.6
+#
+# added cal -3 display in xterm for some options
+#
+# added -xr to reverse the sort on del_line (added function rdel_line)
+# 
+# Clean old entries at once (-clean): the expert I
+# consulted says that this way is fine. Therefore, it's done.
+#
+# added test_date to the no-option entry. Still haven't added it
+# to interactive entry. If so, kill_cal won't run. Would need to add
+# kill_cal to test_date function. Maybe not such a bad idea. Later. 
+
+
+
+# CHANGES in .03d.5
 #
 # Added test to recall functions to get rid of error message if
 # no tmpfile gets created (if no entries match the recall).
@@ -46,7 +77,7 @@ TODO list for todo.sh
 # while making a dated backup copy of the old task list. 
 
 
-#Changes in .03d4
+#CHANGES in .03d4
 # Use no argument to make an entry. You'll be promted to enter all 
 # fields, separated by semi-colons. No quotes are needed for free-form
 # dates or for text, even with parentheses. Don't use semi-colons in 
@@ -54,13 +85,14 @@ TODO list for todo.sh
 # that, change the field separator on line 330 and in awk around 
 #lines 332, 333, and 335, or convince me to do it. I'm undecided.
 
-# Changes in .03d3
+
+# CHANGES in .03d3
 # Fixed bug in todo -x (to delete a line)
 # If you entered nothing, it deleted all lines
 # in the tasklist. Better now.
 
 
-# Changes in .03d
+# CHANGES in .03d
 # Interactive entry (-i) asks question for each field.
 # Recall range of dates. (-w)
 # Delete lines without having to answer yes after each one. (-y)
