@@ -43,6 +43,13 @@ Tags can be up to six characters without screwing with the alignment.
 # Display entries by date they were entered? Is this on anyone's wishlist?
 
 
+# CHANGES in .03d.7
+#
+# added another test in kill_call, to avoid seeing ps --help
+# when using the -a option. The cal now shows on all entry methods.
+# kill_call is in append_entry
+# test_date works with all entry methods
+
 # CHANGES in .03d.6
 #
 # added cal -3 display in xterm for some options
