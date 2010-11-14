@@ -1,0 +1,112 @@
+readme.taskfer
+
+Taskfer (a.k.a. todo-fsr) is a simple command-line task manager that
+runs in bash.
+
+Author: fsmithred at gmail dot com
+
+
+_INSTALLATION_
+
+Put the script in your path, or run  ./todo-fsr-<version> [option]
+or ./taskfer [option] when I get around to changing the name.
+
+Put taskferrc in $HOME/.taskfer (or don't. this is optional.)
+Edit taskferrc to customize the paths.
+
+Edit the taskfer_dir variable in the main script if you want 
+the config file and the working files in some other directory.
+It's near the beginning, and it looks like this:
+taskfer_dir=$HOME/.taskfer
+
+
+_USING TASKFER_
+
+ADD TASKS TO THE LIST
+
+There are three ways to make an entry:
+
+1. Use the -i option (interactive)
+Script asks you to enter tag, date and message, one
+item at a time. (See -a for more information about entries.) 
+
+2. Use the -a option (add/append)
+    todo -a  <tag>  <date>  <message text>
+
+All information you want to enter goes on the command line. Leave
+a space between each field. Free-form dates with spaces, like 
+"next week" or "Nov 15" need to be quoted. The message text may or 
+may not need quotes, depending on what symbols it contains. 
+Parentheses and semi-colons are known to be a problem.
+
+If the date is in the past, you will be asked if you want to continue.
+All fields must be entered. If you forget a tag or a date, you'll get
+the wrong information in that field in the task list.
+
+3. Use no option
+Run the script with no options, and you will be prompted to enter
+a tag, a date, and a message, all on one line, separated by semi-colons. 
+Spaces don't matter, but be consistent about whether you use a space
+before and after the semi-colon, so your fields line up when you recall
+them. Nothing needs to be quoted. Don't use semi-colons inside any 
+of the fields.
+
+
+A note about tags:
+Do yourself a favor, and make all your tags the same length. Then when
+you recall the list, all the entries will be lined up.
+*** (Can we change this? How to pad a field with spaces?) 
+
+
+
+
+RECALL/DISPLAY TASKS
+
+todo <option>
+
+
+-l
+Displays all entries. They are sorted by date, with the oldest
+dates at the top.
+
+
+-d <due date>
+Diplays all entries due on the specified date. Entries are sorted by
+tag, in alphanumeric order. (numbers first) Dates with spaces don't
+need to be quoted here. For example, 
+
+  todo -d next week 
+
+will show entries with due date one week from today.
+
+
+-w [n]
+Shows all tasks due for the next n days. If n is ommitted, the next
+week (today plus 7 days) will be displayed.
+
+-t  <tag>  
+Displays all entries that have the specified tag. Entries are sorted
+by date, with the oldest dates at the top.
+
+-k <keyword>
+Displays all entries that contain the specified key word or phrase
+anywhere in the entry, including tags and dates.
+
+
+
+REMOVE TASKS FROM THE LIST
+
+-x
+Displays the entire tasklist with numbered lines and asks which line
+to delete, then displays the edited list and asks again. 
+Quits when you answer with other than y or Y.
+
+-clean
+Removes all entries with due date older than yesterday.
+
+-e
+Opens the tasklist in a text editor. The default is ***vim/nano*** (DECIDE!)
+and can be changed by editing taskferrc.
+
+-h
+Shows a brief help message.
