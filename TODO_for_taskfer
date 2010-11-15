@@ -1,7 +1,6 @@
 TODO list for todo.sh
 
 
-
 #TODO: 
 
 @@@@@ IMPORTANT!!! date_test anomaly:
@@ -16,31 +15,36 @@ d0=$(date --date=dom +%s)
 Solution: Today is yesterday ; d0=$(date --date=yesterday +%s) until further notice
 
 
-Playing with formatting:
-Now using printf in the output of todo -d (recall by due date)
-Tags can be up to six characters without screwing with the alignment.
-
-
-
-# 
-
-# this one doesn't go away when you quit the pager
-# geometry is set for upper left of second monitor
-#xfce4-terminal --geometry 67x10+1280+0 --hold -e 'cal -3'
-
-### MOVE TAGS in the tasklist after the message, so they can be different lengths without spoiling the view.
-# Multiple tags per entry??? 
-
-# Figure out how to pad the tags, so the fields line up.
-
-# *** Question: ***  is output for deleting an entry better reversed,
-# so that the oldest entries are at the bottom? It's not a problem in
-# a terminal, but it might be a problem in a console.
 
 #WISHLIST
 # Export sorted lists to file?
 # Find a use for date-of-entry field?
 # Display entries by date they were entered? Is this on anyone's wishlist?
+# Multiple tags per entry??? 
+
+
+# CHANGES in .03d.8
+#
+# Cloned some functions and edited them to display cal in console.
+# Changed font in xterm display of cal. 
+#
+# Tags can be up to six characters without screwing with the alignment.
+# This is accomplished by adding a tab in the awk output. No need for
+# printf. Done in all output. Looks like it's ok for tags to contain
+# a space.
+#
+# Alternate Fonts in xterm:
+### This one is good!
+#  xterm -font -*-fixed-medium-r-*-*-20-*-*-*-*-*-iso8859-* -geometry 67x12+0+0 -hold -e 'cal -3' &  
+### This one is better!
+#    xterm -fa monaco -fs 11 -geometry 67x12+0+0 -hold -e 'cal -3' &
+# xterm -font -adobe-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-* 
+#
+# Tried other terminals for calendar display:
+# this one looks good, but doesn't go away when you quit the pager
+# geometry is set for upper left of second monitor
+#    xfce4-terminal --geometry 67x10+1280+0 --hold -e 'cal -3'
+# Failed to display cal in lxterminal, roxterminal, eterm
 
 
 # CHANGES in .03d.7
@@ -49,6 +53,7 @@ Tags can be up to six characters without screwing with the alignment.
 # when using the -a option. The cal now shows on all entry methods.
 # kill_call is in append_entry
 # test_date works with all entry methods
+
 
 # CHANGES in .03d.6
 #
