@@ -3,13 +3,38 @@
 
 # See TODO_for_taskfer for changes and plans.
 
-# Currently experimenting with printf in the -d output.
 # Tags can be up to six characters without screwing the alignment.
 
 # kill_cal notes:
 #   goes in options for any option with exit 0
 #   goes in function if function ends with pager
 #   goes in append_entry, and get there from test_date
+
+# Functions are grouped into three categories:
+#
+# Entry functions, for making an entry to the tasklist:
+#   append_enty - echoes the line into the tasklist.
+#   ask_entry - asks for each field to be entered separately.
+#   test_date - checks that due date is not in the past.
+#
+# Recall functions, to sort and display entries: 
+#   by tag - recall_tag, recall_tag_c
+#   by keyword - recall_keyword 
+#   by due date - recall_due, recall_due_c, recall_week, recall_week_c. 
+# The ones that end in _c will show the calender inline, instead of 
+# spawning a new termina, for use when running in console.
+#   
+# Delete functions, to remove entries from the tasklist.
+#   del_line, ask_del - to remove one line at a time.
+#   clean_old - remove all entries with old due dates.
+#
+# And then there are a few that don't fit a category.
+#   taskfer_configuration - checks for config file settings.
+#   show_cal - displays calendar in popup xterm
+#   kill_cal - closes the popup calendar.
+#   show_help - displays the help_text
+
+
 
 # Some variables used in this script. This section is informational
 # only. The variables get set in different places in the script.
@@ -60,8 +85,8 @@ function show_cal {
 if [[ -n $DISPLAY ]]
 then
 #    xterm -geometry 70x18+0+0 -fs 12 -hold -e cal -3  &
-#    xterm -font -*-fixed-medium-r-*-*-20-*-*-*-*-*-iso8859-* -geometry 67x12+0+0 -hold -e 'cal -3' &  
-    xterm -fa monaco -fs 11 -geometry 67x12+0+0 -hold -e 'cal -3' &
+#    xterm -font -*-fixed-medium-r-*-*-20-*-*-*-*-*-iso8859-* -geometry 67x12+0+0 -hold -e cal -3 &  
+    xterm -fa monaco -fs 11 -geometry 67x12+0+0 -hold -e cal -3 &
     xterm_pid="$!"
 fi
 }
@@ -108,9 +133,9 @@ function test_date {
 }
 
 function ask_entry {
-	cal -3
-	echo
-	echo
+    cal -3
+    echo
+    echo
     tag=
     duedate=
     text=
@@ -130,8 +155,9 @@ exit 0
 
 ### RECALL FUNCTIONS ###
 
-function recall_tags {
-while read line ; do
+function recall_tag {
+while read line
+do
     if [[ -n $(echo $line | cut -d":" -f1 | grep $tag) ]] ; then
         echo "$line" >> "$tmplist"
     fi
@@ -147,9 +173,9 @@ done < "$tasklist"
 exit 0
 }
 
-# with console cal
-function recall_tags_c {
-while read line ; do
+function recall_tag_c {
+while read line
+do
     if [[ -n $(echo $line | cut -d":" -f1 | grep $tag) ]] ; then
         echo "$line" >> "$tmplist"
     fi
@@ -169,7 +195,8 @@ exit 0
 
 # No cal on this one. Could be added.
 function recall_due {
-while read line ; do
+while read line
+do
     if [[ -n $(echo $line | cut -d":" -f2 | grep $ddt) ]] ; then
         echo "$line" >> "$tmplist"
     fi
@@ -188,14 +215,15 @@ exit 0
 function recall_due_c {
 cal -3
 echo
-while read line ; do
+while read line
+do
     if [[ -n $(echo $line | cut -d":" -f2 | grep $ddt) ]] ; then
         echo "$line" >> "$tmplist"
     fi
 done < "$tasklist"
     if [[ -f $tmplist ]]
     then
-      cat "$tmplist" | awk -F: '{ printf $1 "\t" $2 $3 }' | sort 
+      cat "$tmplist" | awk -F: '{ print $1 "\t" $2 $3 }' | sort 
       rm "$tmplist"    
     else
       echo "No entries with due date $ddt"
@@ -206,13 +234,15 @@ exit 0
 
 # start with today, recall due, then increment the date by 1 day
 # $days is defined down in the options loop. If no argument is provided
-# for the -w option, it defaults to 8. Otherwise, it's whatever number
-# of days provided on the command line. -w 3 will return today plus 3 
+# for the -w option, it defaults to 8. Otherwise, it's the number of 
+# days provided on the command line. -w 3 will return today plus 3 
 function recall_week {
     count=0
     ddt=$(date +%Y-%m-%d)
-    until [[ "$count" = "$days" ]] ; do
-        while read line ; do
+    until [[ "$count" = "$days" ]]
+    do
+        while read line
+        do
           if [[ -n $(echo $line | cut -d":" -f2 | grep  $ddt) ]] ; then
           echo "$line" >> "$tmplist"
           fi
@@ -222,7 +252,7 @@ function recall_week {
     done
     if [[ -f $tmplist ]]
     then    
-      cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 $2 $3 }' | "$taskfer_pager"
+      cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 "\t" $2 $3 }' | "$taskfer_pager"
       kill_cal
       rm "$tmplist"
     else
@@ -231,14 +261,15 @@ function recall_week {
 exit 0
 }
 
-# Similar to above, but for running in console
 function recall_week_c {
     cal -3
     echo
     count=0
     ddt=$(date +%Y-%m-%d)
-    until [[ "$count" = "$days" ]] ; do
-        while read line ; do
+    until [[ "$count" = "$days" ]]
+    do
+        while read line
+        do
           if [[ -n $(echo $line | cut -d":" -f2 | grep  $ddt) ]] ; then
           echo "$line" >> "$tmplist"
           fi
@@ -248,22 +279,21 @@ function recall_week_c {
     done
     if [[ -f $tmplist ]]
     then    
-      cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 "\t" $2 $3 }' 
-      rm "$tmplist"
+        cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 "\t" $2 $3 }' 
+        rm "$tmplist"
     else
-      echo "No tasks listed for next $days days"
+        echo "No tasks listed for next $days days"
     fi       
 echo
 exit 0
 }
 
-# No pager on this one. Pipe the sort to "$taskfer_pager" if you want.
-# No cal on this one. Add pager and kill_cal if you want it.
 function recall_keyword {
-    while read line
-    do
+cal -3
+while read line
+  do
       grep "$key" | awk -F: '{ print $1 $2 $3 }' | sort -n
-    done < "$tasklist"
+  done < "$tasklist"
 exit 0
 }
 
@@ -271,7 +301,8 @@ exit 0
 ### DELETE FUNCTIONS ###
 
 function ask_del {
-while true ; do
+while true
+  do
     echo "
     Delete a line?
     (y,N)
@@ -281,7 +312,7 @@ while true ; do
       [Yy]) del_line ;;
          *) exit 0 ;;
     esac
-done
+  done
 }
 
 # Display the list with line numbers, ask which line to delete,
@@ -290,7 +321,8 @@ done
 # and then run ask_del to see if you want to delete another.
 # Anything other than numeric answer exits the script.
 function del_line {
-while true ; do
+while true
+  do
     ln=
     nl "$tasklist" | sort -n
     echo "
@@ -298,9 +330,9 @@ while true ; do
     : "
     read ln
     if  [[ -z "$ln" ]]
-        then
-          echo "Nothing was entered"
-          ask_del
+    then
+        echo "Nothing was entered"
+        ask_del
     else
       case "$ln" in
       [0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]) echo "Entry $ln will be deleted"
@@ -308,14 +340,15 @@ while true ; do
             sed -i~ "$ln"'d'  "$tasklist" 
             ask_del ;;
        *) exit 0 ;;
-    esac
+      esac
     fi
-done
+  done
 }
 
 # Same as del_line, but diplay reverse order.
 function rdel_line {
-while true ; do
+while true 
+  do
     ln=
     nl "$tasklist" | sort -rn
     echo "
@@ -323,9 +356,9 @@ while true ; do
     : "
     read ln
     if  [[ -z "$ln" ]]
-        then
-          echo "Nothing was entered"
-          ask_del
+    then
+        echo "Nothing was entered"
+        ask_del
     else
       case "$ln" in
       [0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]) echo "Entry $ln will be deleted"
@@ -333,9 +366,9 @@ while true ; do
             sed -i~ "$ln"'d'  "$tasklist" 
             ask_del ;;
        *) exit 0 ;;
-    esac
+      esac
     fi
-done
+  done
 }
 
 # select entries with due dates no older than yesterday, put them in
@@ -344,14 +377,15 @@ done
 #### To change to dates no older than today, use d0=$(something goes here) ####
 function clean_old {
 d0=$(date --date=yesterday +%s)
-while read line ; do
+while read line
+  do
     ddt=$(echo $line | cut -d":" -f2)
     d1=$(date --date="$ddt" +%s)
         if (("$d1" > "$d0"))
         then
         echo "$line" >> "$tmplist"
         fi
-done < "$tasklist"
+  done < "$tasklist"
     mv "$tasklist" "$tasklist"~
     mv "$tmplist" "$tasklist"
     echo "Old entries removed from task list.
@@ -445,7 +479,8 @@ then
     exit 1
 fi
         
-while [[ $1 == -* ]]; do
+while [[ $1 == -* ]]
+do
     case "$1" in
       -a) shift ; tag="$1" ; shift ; duedate="$1" ; shift ; text="$@" 
             ddt=$(date --date="$duedate" +%F) ; d1=$(date --date=$ddt +%s) ; d0=$(date --date=yesterday +%s) ; test_date ;;
@@ -458,8 +493,8 @@ while [[ $1 == -* ]]; do
       -i) show_cal ; ask_entry ;;
       -k) key="$2" ; recall_keyword ;;
       -l) show_cal ; cat "$tasklist" | sort -t: -k2 | awk -F: '{ print $1 $2 $3 }' | "$taskfer_pager" ; kill_cal ; exit 0 ;;
-      -t) show_cal ; tag="$2" ; recall_tags ;;
-      -tc) tag="$2" ; recall_tags_c ;;
+      -t) show_cal ; tag="$2" ; recall_tag ;;
+      -tc) tag="$2" ; recall_tag_c ;;
       -w) show_cal ; if [[ "$2" ]] ; then days="$2" ; else days=8 ; fi ; recall_week ;;
       -wc) if [[ "$2" ]] ; then days="$2" ; else days=8 ; fi ; recall_week_c ;;
       -clean) clean_old ;;
