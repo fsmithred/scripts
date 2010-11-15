@@ -176,7 +176,7 @@ while read line ; do
 done < "$tasklist"
     if [[ -f $tmplist ]]
     then
-      cat "$tmplist" | awk -F: '{ printf "%9s",$1 "\t" $2"\t" $3"\n" }' | sort | "$taskfer_pager"
+      cat "$tmplist" | awk -F: '{ print $1 "\t" $2 $3 }' | sort | "$taskfer_pager"
       rm "$tmplist"    
     else
       echo "No entries with due date $ddt"
@@ -195,7 +195,7 @@ while read line ; do
 done < "$tasklist"
     if [[ -f $tmplist ]]
     then
-      cat "$tmplist" | awk -F: '{ printf "%9s",$1 "\t" $2"\t" $3"\n" }' | sort 
+      cat "$tmplist" | awk -F: '{ printf $1 "\t" $2 $3 }' | sort 
       rm "$tmplist"    
     else
       echo "No entries with due date $ddt"
@@ -248,7 +248,7 @@ function recall_week_c {
     done
     if [[ -f $tmplist ]]
     then    
-      cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 $2 $3 }' 
+      cat "$tmplist" | sort -t: -k2 | awk -F: '{ print $1 "\t" $2 $3 }' 
       rm "$tmplist"
     else
       echo "No tasks listed for next $days days"
@@ -278,7 +278,7 @@ while true ; do
     "
     read answer
     case "$answer" in
-      [Yy]) del_lines ;;
+      [Yy]) del_line ;;
          *) exit 0 ;;
     esac
 done
