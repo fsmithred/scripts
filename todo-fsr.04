@@ -480,6 +480,8 @@ help_text="\n
     -k <keyword>    recall entries by keyword or phrase
 
     -l, -list       list all entries. 
+    
+    -r, -recur      enter a recurrent event.
 
     -t <tag>        recall entries by tag
 
