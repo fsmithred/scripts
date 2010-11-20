@@ -14,7 +14,13 @@ dom=$(date +%d)
 d0=$(date --date=dom +%s)
 Solution: Today is yesterday ; d0=$(date --date=yesterday +%s) until further notice
 
+Better Solution:
+# Today's date, in seconds, at the beginning of the day.
+# Use d0 with d1 (the entered date in seconds) for testing valid dates.
+beginday=$(date +%Y-%m-%d) 
+d0=$(date --date="$beginday" +%s)
 
+NOTE!  date_test only works with gnu coreutils. Won't work with bsd.
 
 #WISHLIST
 # Export sorted lists to file?
@@ -22,6 +28,26 @@ Solution: Today is yesterday ; d0=$(date --date=yesterday +%s) until further not
 # Display entries by date they were entered? Is this on anyone's wishlist?
 # Multiple tags per entry??? 
 
+
+# CHANGES in .04
+#
+# Added recurrent entry, -r or -recur (use words like
+# day, week, month for daily, weekly, monthly.
+# NOTE: This entry method bypasses the date test.
+# Moved test for argument out of -k and -tc function. 
+#
+
+# CHANGES in .03d.9
+#
+# Fixed problem with today's date for date_test.
+# Moved ddt, d1, d0 out of options loop, into test_date, recall_due,
+# and recall_due_c. 
+# Added tab to the rest of the awk commands where it was missing. 
+# Now recall_tag displays the tag, in case you want to search for
+# a pattern that's common to two tags.
+# Added test for argument to options -tc and -k, in the functions.
+# Added more word options to some of the existing options:
+# -add, -due, -key, -list, -tag, -week
 
 # CHANGES in .03d.8
 #
