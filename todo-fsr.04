@@ -187,9 +187,8 @@ function recurrent {
             tag=$(echo "$line" | awk -F ";" '{ print $1 }')
             duedate=$(echo "$line" | awk -F ";" '{ print $2 }')
             text=$(echo "$line" | awk -F ";" '{ print $3 }')
-            repeats=$(echo "$line" | awk -F ";" '{ print $4 }')
-            cycle=$(echo "$line" | awk -F ";" '{ print $5 }')
-#            test_date
+            repeats=$(echo "$line" | awk -F ";" '{ gsub(/ /,"") ; print $4 }')
+            cycle=$(echo "$line" | awk -F ";" '{  print $5 }')
         else 
             echo "nothing was entered
             " ;  exit 0
