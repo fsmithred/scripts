@@ -318,7 +318,7 @@ exit 0
 
 function recall_week_c {
     cal -3
-    ech
+    echo
     count=0
     ddt=$(date +%Y-%m-%d)
     until [[ "$count" = "$days" ]]
