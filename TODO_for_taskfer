@@ -29,6 +29,25 @@ NOTE!  date_test only works with gnu coreutils. Won't work with bsd.
 # Multiple tags per entry??? 
 
 
+# CHANGES in .04.1
+#
+# Sort entries by due date in del_line and rdel_line.
+# Inform user of invalid entry for del_line and rdel_line,
+# and then ask_del, instead of silent exit.
+# Put the cat out.
+# Added test for old tmplist.
+# Added kill_cal if no entries found on recall.
+# Moved show_cal out of options and into relevant functions.
+# Changed field separator to pipe, so you can use colons in message.
+# All long options now require double dashes.
+# Reformatted options section for visual clarity.
+# Changed the names of functions for console to *_cons and recurrent to
+# recurrent_entry. 
+# Changed names of variables: ln to line_num, d0 to day0, d1 to day1.
+# Recurrent events get echoed to screen when you enter them.
+# 
+
+#
 # CHANGES in .04
 #
 # Added recurrent entry, -r or -recur (use words like
@@ -135,11 +154,6 @@ NOTE!  date_test only works with gnu coreutils. Won't work with bsd.
 # Recall range of dates. (-w)
 # Delete lines without having to answer yes after each one. (-y)
 # Almost: delete all entries with old due dates.
-
-
-
-
-
 
 
 
