@@ -3,9 +3,9 @@
 # set-selections.sh
 # This script is to be used with get-selections.sh
 
-# This dir needs to have a trailing slash.
-#list_dir="$HOME/bin/package_lists/"
-list_dir="$(pwd)/"
+# THE DIRECTORY YOU PUT HERE NEEDS A TRAILING SLASH!
+list_dir=""
+
 
 
  Check that user is root
@@ -58,20 +58,21 @@ echo "
 sleep 1
 dpkg --clear-selections
 echo "
- Running dpkg --set-selections < package_selections_$datetime...
- "
+ Running dpkg --set-selections <" "$list_dir"package_selections_"$datetime"...
+
 sleep 1
-dpkg --set-selections < package_selections_$datetime
+dpkg --set-selections < "$list_dir"package_selections_"$datetime"
 echo "
  Running apt-get -u dselect-upgrade...
  " 
 sleep 1
 apt-get -u dselect-upgrade
 echo "
- Running aptitude markauto $(cat auto-packages_$datetime)...
- "
+ Running aptitude markauto \$(cat '$list_dir'auto-packages_$datetime)...
+"
+
 sleep 1
-aptitude markauto $(cat auto-packages_$datetime)
+aptitude markauto $(cat "$list_dir"auto-packages_"$datetime")
 echo "
 And that would be it. 
 "
