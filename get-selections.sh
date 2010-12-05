@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-
+#
+# get-selections.sh
+# Create file lists for running 'dpkg --set-selections'
+# and 'aptitude markauto'
 
 
 stamp=$(date +%Y%m%d_%s)
 
+# You can change the directory where the lists are stored. Make sure
+# that this variable is the same in both get-selections.sh and
+# set-selections.sh. If you leave the value empty or use "$(pwd)/"
+# the list files will be in the same directory as the scripts.
 # THE DIRECTORY YOU PUT HERE NEEDS A TRAILING SLASH!
 list_dir=""
 
