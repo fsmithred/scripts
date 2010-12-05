@@ -3,7 +3,10 @@
 
 
 stamp=$(date +%Y%m%d_%s)
-list_dir="$HOME/bin/package_lists/"
+
+# THE DIRECTORY YOU PUT HERE NEEDS A TRAILING SLASH!
+list_dir=""
+
 
 if [[ -n $list_dir ]] && ! [[ -d $list_dir ]]
 then
@@ -15,12 +18,12 @@ then
 fi
 
 echo "
-    Running dpkg --get-selections \"*\" > $list_dirpackage_selections_$stamp"
+    Running dpkg --get-selections \"*\" >" "$list_dir"package_selections_"$stamp"
     dpkg --get-selections "*" > "$list_dir"package_selections_"$stamp"
     echo "    Done!
     "
 echo "
-    Now running aptitude -F '%p' search '~M' > $list_dirauto-packages_$stamp"
+    Now running aptitude -F '%p' search '~M' >" "$list_dir"auto-packages_"$stamp"
     aptitude -F '%p' search '~M' > "$list_dir"auto-packages_"$stamp"
     echo "    Done!
     "
