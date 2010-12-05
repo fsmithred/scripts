@@ -1,21 +1,24 @@
 readme.taskfer
 
-Taskfer (a.k.a. todo-fsr) is a simple command-line task manager that
+Taskfer (a.k.a. todo) is a simple command-line task manager that
 runs in bash.
 
-Author: fsmithred at gmail dot com
+Copyright 2010 fsmithred at gmail dot com
+License: Artistic License 2.0
+(http://www.perlfoundation.org/artistic_license_2_0)
 
 
 _INSTALLATION_
 
-Put the script in your path, or run  ./todo-fsr-<version> [option]
-or ./taskfer [option] when I get around to changing the name.
+The executable script is named todo for easy typing. Put it in your 
+path ($HOME/bin is a good choice), or run from the current directory as
+  ./todo [option]
 
 Put taskferrc in $HOME/.taskfer (or don't. this is optional.)
 Edit taskferrc to customize the paths.
 
 Edit the taskfer_dir variable in the main script if you want 
-the config file and the working files in some other directory.
+the config and working files in some other directory.
 It's near the beginning, and it looks like this:
 taskfer_dir=$HOME/.taskfer
 
@@ -28,7 +31,7 @@ There are three ways to make an entry:
 
 1. Use the -i option (interactive)
 Script asks you to enter tag, date and message, one
-item at a time. (See -a for more information about entries.) 
+item at a time. (See below for more information about entries.) 
 
 2. Use the -a option (add/append)
     todo -a  <tag>  <date>  <message text>
@@ -48,15 +51,13 @@ Run the script with no options, and you will be prompted to enter
 a tag, a date, and a message, all on one line, separated by semi-colons. 
 Spaces don't matter, but be consistent about whether you use a space
 before and after the semi-colon, so your fields line up when you recall
-them. Nothing needs to be quoted. Don't use semi-colons inside any 
-of the fields.
-
+them. Nothing needs to be quoted. It is now safe to use colons and 
+semi-colons in any field. (starting with version .04.1)
 
 A note about tags:
-Do yourself a favor, and make all your tags the same length. Then when
-you recall the list, all the entries will be lined up.
-*** (Can we change this? How to pad a field with spaces?) 
-
+Tags can be up to six characters long without messing up the alignment
+of the fields on recall. Longer tags will work, but the result won't
+look as nice.
 
 
 
@@ -66,9 +67,8 @@ todo <option>
 
 
 -l
-Displays all entries. They are sorted by date, with the oldest
-dates at the top.
-
+Displays all entries using the pager (default pager is less.) Entries
+are sorted by date, with the oldest dates at the top.
 
 -d <due date>
 Diplays all entries due on the specified date. Entries are sorted by
@@ -98,11 +98,12 @@ REMOVE TASKS FROM THE LIST
 
 -x
 Displays the entire tasklist with numbered lines and asks which line
-to delete, then displays the edited list and asks again. 
-Quits when you answer with other than y or Y.
+to delete, then asks if you want to delete another line. A yes answer
+displays the edited list and asks which line to delete. Quits when you 
+answer with other than y or Y.
 
 -clean
-Removes all entries with due date older than yesterday.
+Removes all entries with due date older than today.
 
 -e
 Opens the tasklist in a text editor. The default is ***vim/nano*** (DECIDE!)
@@ -110,3 +111,40 @@ and can be changed by editing taskferrc.
 
 -h
 Shows a brief help message.
+
+
+
+AUTOMATIC NOTIFICATION
+
+There are a few ways to get taskfer to remind you automatically that you
+have tasks listed for the day (or the week.)
+
+If you log in to a command line environment:
+Put a line like this in your .profile, and you'll get to see your tasks
+for the week when you log in. Change "todo -wc" to "todo -dc" to get
+the task list for today only. 
+
+echo -e "\n\n" && todo -wc  && echo -e "\n today is: \n $(date +%F) \n"
+
+
+If you're in a graphical environment, you can use taskfer-notify. You
+must have libnotify-bin installed (in Debian), and you must put the
+taskfer-notify script in your path. This will give you a popup window to
+alert you that there are tasks due today. 
+
+You could add taskfer-notify to your startup applications in whatever 
+desktop you're using, and you'll get the popup when you log in to your 
+desktop. Another way would be to make a wrapper script for some 
+application that you normall run by clicking on a panel button. 
+I've got mine set to run when I start my browser. Edit the button
+properties to run a script like the following, make the script
+executable, and put it in your path.
+
+#!/usr/bin/env bash
+# start-iceweasel
+
+$HOME/bin/taskfer-notify
+iceweasel
+
+exit 0
+

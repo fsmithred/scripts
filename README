@@ -80,3 +80,31 @@ Another situation where you might run into this, is if you’re tracking a branc
 To get around this, you will have to specify the local branch in the push command using a colon (:) like so:
 
     git push otherrepo othermaster:master
+
+
+-----------------------
+
+<telemachus> (1) Fork a repo
+<telemachus> This gives you a copy on Github for yourself
+
+<telemachus> (2) Clone your copy
+<telemachus> make sure to clone the read/write address
+git clone git@github.com:tornow/scripts
+
+<telemachus> (3) add a remote of upstream
+<telemachus> git remote add upstream URL
+git remote add upstream git[[://github.com/fsmithred/scripts]]
+<telemachus> the URL is the upstream Github URL
+<telemachus> you can always see it when you go to a Github page
+
+<telemachus> To keep up with the person you forked from you do this
+<telemachus> (4) git pull upstream master
+
+<telemachus> to make changes to you own code you do this
+<telemachus> code, code, code, git add foo, git commit -m "Foo the foo up"
+<telemachus> to push changes to your repo
+<telemachus> git push origin master
+
+git remote --verbose
+
+
