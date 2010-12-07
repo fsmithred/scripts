@@ -118,7 +118,7 @@ fi
 
 # Check that X is running before starting cal in xterm
 function show_cal {
-if [[ -n $DISPLAY ]]
+if [[ $DISPLAY ]]
 then
 #    xterm -geometry 70x18+0+0  -hold -e cal -3  &
 #    xterm -font -*-fixed-medium-r-*-*-20-*-*-*-*-*-iso8859-* -geometry 67x12+0+0 -hold -e cal -3 &  
@@ -197,7 +197,7 @@ function recurrent_event {
   
     <tag> ; <due date> ; <message> ; <repeats> ; <cycle>
     "
-    read line
+    read -e line
         if [[ $line == *\;*\;*\;*\;* ]]
         then
             tag=$(echo "$line" | awk -F ";" '{ print $1 }')
@@ -488,7 +488,7 @@ exit 0
 
 
 function show_help {
-    printf "$help_text" 
+    printf "$help_text"  | "$taskfer_pager"
     exit 0
 }
 
@@ -616,8 +616,7 @@ do
               exit 0 ;;
                  
       -h|--help|-\?)
-              show_help
-              exit 0 ;;
+              show_help ;;
 
       -i|--interactive)
               ask_entry ;;
