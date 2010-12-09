@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+taskfer_dir="$HOME/.taskfer"
+
+help_text="
+    Setup Instructions
+    (See README for manual setup instructions.)
+    
+    tar -xvzf taskfer<version>.tar.gz
+    cd tasker<version>
+    ./taskfer_setup
+    
+    Required files to run taskfer_setup:
+        todo
+        taskferrc
+        taskfer_setup    
+    "
+
+
+function show_help {
+	echo "$help_text"
+    exit 0
+}
+
+if ! [[ -f $(pwd)/todo ]]
+then
+    echo "
+    File missing:
+    $(pwd)/todo 
+    Make sure you're in the right directory."
+    show_help
+fi
+
+if ! [[ -f $(pwd)/taskferrc ]]
+then
+    echo "
+    File missing:
+    $(pwd)/taskferrc 
+    Make sure you're in the right directory."
+    show_help
+fi
+
+
+
+
+echo "
+    The default location for the config file
+    and working files for taskfer is in
+    $taskfer_dir
+    
+    Hit the SPACE BAR or the ENTER key to accept the default. If you
+    want to use a different location, exit by hitting any other key,
+    then edit the taskfer_dir variable in this file (line 3) and in the 
+    todo script (line 88), and run the taskfer_setup script again.
+    
+    Alternate instructions... (I can't decide right now.)
+    Hit the SPACE BAR or the ENTER key to accept the default. If you
+    want to use a different location, exit by hitting any other key,
+    and follow the instructions in the readme file
+    "
+read -n1 answer
+if  [[ $answer == "" ]]
+then
+    if ! [[ -d $taskfer_dir ]]
+    then
+        mkdir "$taskfer_dir"
+        echo "--------creating $taskfer_dir"
+    fi 
+else
+    exit 0
+fi
+
+echo ++++++++++
+   
+if ! [[ -f "$taskfer_dir"/taskferrc ]]
+then
+    cp taskferrc "$taskfer_dir"
+    echo "======= copying taskferrc"
+else
+    echo "
+        $taskfer_dir/taskferrc already exists.
+        Overwrite?
+        "
+    read answer
+    case $answer in
+        [yY]*) cp taskferrc "$taskfer_dir"
+               echo "File copied." ;;
+            *) ;;
+    esac
+fi
+
+
+if [[ -d $HOME/bin ]]
+then
+    echo "
+    The todo script will be copied to $HOME/bin.
+    If you don't want it there, answer \"no\" to exit this
+    setup. Otherwise, just hit ENTER.
+    "
+    read ans
+    case $ans in 
+        [Nn]*) exit 0 ;;
+            *) if ! [[ -f $HOME/bin/todo ]]
+               then 
+                   cp todo $HOME/bin
+                   echo "
+               File copied. 
+               Run todo -h for help.
+               " ; exit 0 
+               else 
+                   echo "
+               $HOME/bin/todo already exists.
+               Overwrite?  (y,N)
+               "
+                   read answer
+                   case $answer in
+                       [yY]*) echo todo $HOME/bin
+                              echo "
+               File copied. 
+               Run todo -h for help.
+               "                        ; exit 0 ;;
+                           *) echo "
+               Exiting...
+               "                        ; exit 1 ;;
+                   esac
+               fi
+    esac
+else
+   echo "
+   $HOME/bin does not exist. You need to manually 
+   copy the todo script where you want it.
+   Run ./todo -h for help.
+    "
+   fi
