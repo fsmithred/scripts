@@ -9,10 +9,10 @@ stamp=$(date +%Y%m%d_%s)
 
 # You can change the directory where the lists are stored. Make sure
 # that this variable is the same in both get-selections.sh and
-# set-selections.sh. If you leave the value empty or use "$(pwd)/"
-# the list files will be in the same directory as the scripts.
-# THE DIRECTORY YOU PUT HERE NEEDS A TRAILING SLASH!
-list_dir=""
+# set-selections.sh. If you use "$(pwd)" the list files will be 
+# in the same directory as the scripts.
+
+list_dir="$(pwd)"
 
 
 if [[ -n $list_dir ]] && ! [[ -d $list_dir ]]
@@ -25,13 +25,13 @@ then
 fi
 
 echo "
-    Running dpkg --get-selections \"*\" >" "$list_dir"package_selections_"$stamp"
-    dpkg --get-selections "*" > "$list_dir"package_selections_"$stamp"
+    Running dpkg --get-selections \"*\" >" "$list_dir"/package_selections_"$stamp"
+    dpkg --get-selections "*" > "$list_dir"/package_selections_"$stamp"
     echo "    Done!
     "
 echo "
-    Now running aptitude -F '%p' search '~M' >" "$list_dir"auto-packages_"$stamp"
-    aptitude -F '%p' search '~M' > "$list_dir"auto-packages_"$stamp"
+    Now running aptitude -F '%p' search '~M' >" "$list_dir"/auto-packages_"$stamp"
+    aptitude -F '%p' search '~M' > "$list_dir"/auto-packages_"$stamp"
     echo "    Done!
     "
 exit 0
