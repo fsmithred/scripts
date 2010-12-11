@@ -15,6 +15,7 @@
 list_dir="$(pwd)"
 
 
+
 if [[ $(id -u) -ne 0 ]]
 then
     echo "
@@ -33,6 +34,11 @@ then
 fi
 
 
+# show the files in $list_dir
+printf "\n File List
+$(ls $list_dir)\n\n
+ Choices listed by date/time stamp\n\n"
+
 # get the date/time stamps from the package list files
 # and present them as selections.
 datetime=
@@ -43,7 +49,8 @@ do
 	((index++))
 done
 
-PS3="make choice by number: "
+PS3="
+ make choice by number: "
 select choice in "${date_list[@]}"
 do
 	datetime="$choice"
@@ -76,6 +83,7 @@ sleep 1
 apt-get update
 
 
+trap '' INT
 echo "
  Running dpkg --clear-selections..."
 sleep 1
@@ -87,6 +95,7 @@ echo "
 echo
 sleep 1
 dpkg --set-selections < "$list_dir"/package_selections_"$datetime"
+trap - INT
 
 
 echo "
