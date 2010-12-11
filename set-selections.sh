@@ -24,12 +24,31 @@ then
     exit 0
 fi
 
-if [[ -n $list_dir ]] && ! [[ -d $list_dir ]]
+if [[ -z $list_dir ]]
 then
     echo "
-        $list_dir does not exist.
-        Exiting...
+    You must set the list_dir variable to
+    a directory that contains package lists.
+    Exiting...
+    " 
+    exit 1
+fi
+
+if ! [[ -d $list_dir ]]
+then
+    echo "
+    $list_dir directory does not exist.
+    Exiting...
         "
+    exit 1
+fi
+
+if [[ -z $(find "$list_dir" -type f -name "package_selections_*") ]]
+then
+    echo "
+    $list_dir contains no package list files.
+    Exiting...
+          "
     exit 1
 fi
 
@@ -39,11 +58,12 @@ printf "\n File List
 $(ls $list_dir)\n\n
  Choices listed by date/time stamp\n\n"
 
+
 # get the date/time stamps from the package list files
 # and present them as selections.
 datetime=
 index=0
-for i in "$list_dir"/auto*
+for i in "$list_dir"/package_selections_*
 do
 	date_list[$index]="${i#*s_}"
 	((index++))
@@ -56,6 +76,7 @@ do
 	datetime="$choice"
 	break
 done
+
 
 
 # test to make sure the files you selected really exist.
