@@ -1,0 +1,737 @@
+#!/usr/bin/env bash
+# todo-fsr.04.4-pre (aka taskfer, aka todo)
+
+
+# Copyright 2010 fsmithred at gmail dot com
+# License: Artistic License 2.0
+# (http://www.perlfoundation.org/artistic_license_2_0)
+# Acknowledgements: Thanks to Markus Tornow for helping me with testing,
+# for asking good questions and making good suggestions, and for some
+# solutions with lines of code. Also, thanks to Telemachus for the
+# config file and for the idea of writing a task manager as a project
+# to learn bash programming.
+#
+# THIS IS FREE SOFTWARE WITH NO WARRANTIES. SEE THE FULL DISCLAIMER
+# IN THE LICENSE FILE.
+
+
+# Taskfer is a task-manager written in bash. It has several options for
+# entry and recall of data. Entries  consist of a tag, a due date, and
+# a message, all of which are appended to a simple text file with 
+# pipe-separated fields. A calendar (cal/ncal), showing last month, this 
+# month and next month is displayed in most of the entry and recall
+# methods. If the script is run with no options, it prompts the user to
+# enter all fields at once. 
+#
+# The executable is called todo for easier typing and to 
+# prevent confusion with other utilities that begin with "task" 
+# (like tasksel). When I'm satisfied that it's finished enough to be 
+# distributed, I'll probably shorten it to todo.
+#
+# Taskfer has been tested in Debian 5.0 (Lenny) and 6.0 (Squeeze). Some
+# functions (e.g. date_test) will only work with gnu coreutils, so
+# taskfer won't work with BSD. It should work with other linux 
+# distributions.
+
+
+# Functions are grouped into three categories:
+#
+# ENTRY FUNCTIONS, for making an entry to the tasklist:
+#   append_enty - all fields are entered on the command line.
+#   ask_entry - asks for each field to be entered separately.
+#   test_date - checks that due date is not in the past.
+#   recurrent_event - adds multiple entries for a recurrent event.
+#
+# RECALL FUNCTIONS, to sort and display entries: 
+#   recall_tag  -  Display entries that have the selected tag.
+#                  Tags can be up to six characters.
+#   recall_keyword - Searches for key word or phrase in all fields.
+#   recall_due  -  Recall entries due on a single date. 
+#   recall_week -  Recall entries due on a span of dates.
+# 
+# Function names that end in _cons will show the calender inline, 
+# instead of spawning a new terminal, for use when running in console.
+#   
+# DELETE FUNCTIONS, to remove entries from the tasklist.
+#   del_line, ask_del - to remove one line at a time.
+#   clean_old - remove all entries with due dates older than today.
+#
+# And then there are a few that don't fit a category.
+#   taskfer_configuration - checks for config file settings.
+#   show_help - displays the help_text
+#   show_cal - displays calendar in popup xterm
+#   kill_cal - closes the popup calendar.
+#
+
+
+# Some variables used in this script. This section is informational
+# only. The variables get set in different places in the script. Some
+# are entered on the command line or during the running of the script.
+# The only user configurable variable in the file is taskfer_dir.
+#  
+# duedate = the date you enter
+# repeats = number of times a recurrent event is repeated.
+# cycle = time between recurrent events; day, week, month, year.
+# days = number of days you enter for the -w option
+# line_num = line number
+# beginday is today at 00:00:00
+# ddt is the due date converted to yyyy-mm-dd
+# day0 is the beginning of today converted to seconds.
+# day1 is some other date converted to seconds, for date arithmetic.
+
+
+# This directory will hold the tasklist file, a config file, and
+# any temporary files that get used in running the script.
+# A config file is not required, but makes it easier to change
+# some defaults.
+## IF YOU WANT TASKFER TO USE A DIFFERENT DIRECTORY, CHANGE IT HERE. ##
+taskfer_dir=$HOME/.taskfer
+
+
+if ! [[ -d $taskfer_dir ]]
+    then
+        mkdir $taskfer_dir
+fi
+
+function taskfer_configuration {
+    if [[ -f $taskfer_dir/taskferrc ]] ; then
+        source $taskfer_dir/taskferrc
+    fi
+#
+#    # check for values in $taskfer_dir/taskferrc and use them.
+#    # if any are unset, this will set them.
+    tasklist=${tasklist:="$taskfer_dir/tasklist"}
+    tmplist=${tmplist:="$taskfer_dir/tmplist"}
+    taskfer_pager=${taskfer_pager:=$(which less)}
+    taskfer_editor=${taskfer_editor:=$(which vim)}
+}
+
+taskfer_configuration
+
+
+# make sure tmplist doesn't exist from an aborted previous run.
+if [[ -f "$tmplist" ]]
+then
+    rm "$tmplist"
+fi
+
+# Check that X is running before starting cal in xterm
+function show_cal {
+if [[ $DISPLAY ]]
+then
+#    xterm -geometry 70x18+0+0  -hold -e cal -3  &
+#    xterm -font -*-fixed-medium-r-*-*-20-*-*-*-*-*-iso8859-* -geometry 67x12+0+0 -hold -e cal -3 &  
+    xterm -fa monaco -fs 11 -geometry 67x12+0+0 -hold -e cal -3 &
+    xterm_pid="$!"
+fi
+}
+
+# Check that xterm is still running before killing it
+function kill_cal {
+if [[ -n "$xterm_pid" ]]
+then
+    if ps -p "$xterm_pid" > /dev/null
+    then
+        kill "$xterm_pid"
+    fi
+fi
+}
+
+
+#####@@@@@  ENTRY FUNCTIONS @@@@@#####
+
+function append_entry {
+     echo "$tag | $ddt | $text | Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+     echo
+     echo "$tag | $ddt | $text |" # Entered on $(date +%Y-%m-%d)
+     echo
+     sleep 1
+     default_entry
+}
+
+function test_date {
+if [[ $duedate == n* ]]
+then ddt="none"
+     append_entry
+else    
+    beginday=$(date +%Y-%m-%d) 
+    day0=$(date --date="$beginday" +%s)
+    ddt=$(date --date="$duedate" +%F)
+    day1=$(date --date="$ddt" +%s)
+    if (("$day1" < "$day0"))
+    then echo " 
+      Due date is in the past!
+      Are you sure you want to continue?
+      (y,N): "
+      read answer
+      case "$answer" in
+          [Yy]) append_entry ;;
+             *) exit 0 ;;
+      esac
+    else
+      append_entry
+    fi
+fi
+}
+
+function default_entry {
+
+    echo "
+    Enter all fields, separated by semi-colon.
+    To exit, hit ENTER without typing anything.
+    <tag> ; <due date> ; <message>
+    "
+    read -e line
+        if [[ $line == *\;*\;* ]]
+        then
+            tag=$(echo "$line" | awk -F ";" '{ print $1 }')
+            duedate=$(echo "$line" | awk -F ";" '{ print $2 }')
+            text=$(echo "$line" | awk -F ";" '{ print $3 }')
+            test_date
+        else 
+            echo "nothing was entered
+            " ;  exit 0
+        fi
+}
+
+function ask_entry {
+    cal -3
+    echo
+    echo
+    tag=
+    duedate=
+    text=
+    echo "Tag: "
+    read -e tag
+    echo "Date task is due.  (use *any* format): "
+    read -e duedate
+    echo "Message: "
+    read -e text
+    test_date
+exit 0
+}
+
+function recurrent_event {
+    cal -3 &
+    sleep 1
+    echo "
+    Enter all fields, separated by semi-colon, as below,
+    where repeats=number of recurrences and cycle=length of time
+    between recurrences (days, weeks, months).
+  
+    <tag> ; <due date> ; <message> ; <repeats> ; <cycle>
+    "
+    read -e line
+        if [[ $line == *\;*\;*\;*\;* ]]
+        then
+            tag=$(echo "$line" | awk -F ";" '{ print $1 }')
+            duedate=$(echo "$line" | awk -F ";" '{ print $2 }')
+            text=$(echo "$line" | awk -F ";" '{ print $3 }')
+            repeats=$(echo "$line" | awk -F ";" '{ gsub(/ /,"") ; print $4 }')
+            cycle=$(echo "$line" | awk -F ";" '{  print $5 }')
+        else 
+            echo "nothing was entered
+            " ;  exit 0
+        fi
+
+    count=0
+    ddt=$(date --date="$duedate" +%Y-%m-%d)
+    until [[ "$count" = "$repeats" ]]
+    do
+        echo "$tag | $ddt | $text | Entered on $(date +%Y-%m-%d)"    
+        echo "$tag | $ddt | $text | Entered on $(date +%Y-%m-%d)" >> "$tasklist"
+        ddt=$(date --date="$ddt + 1 $cycle" +%Y-%m-%d)
+        ((count+=1))
+    done
+exit 0
+}
+
+
+#####@@@@@ RECALL FUNCTIONS @@@@@#####
+
+function recall_tag {
+show_cal
+while read line
+do
+    if [[ -n $(echo $line | cut -d"|" -f1 | grep $tag) ]]
+    then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    if [[ -f $tmplist ]]
+    then
+      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort -n  | "$taskfer_pager"
+      kill_cal
+      rm "$tmplist"
+    else
+      echo "No entries with tag \"$tag\"" 
+      kill_cal   
+    fi
+exit 0
+}
+
+function recall_tag_cons {
+while read line
+do
+    if [[ -n $(echo $line | cut -d"|" -f1 | grep $tag) ]]
+    then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    if [[ -f $tmplist ]]
+    then
+      cal -3
+      echo
+      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort -n
+      rm "$tmplist"
+    else
+      echo "No entries with tag \"$tag\""    
+    fi
+echo
+exit 0
+}
+
+# No cal on this one. Could be added.
+function recall_due {
+ddt=$(date --date="$duedate" +%F)
+while read line
+do
+    if [[ -n $(echo $line | cut -d"|" -f2 | grep $ddt) ]]
+    then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    if [[ -f $tmplist ]]
+    then
+      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort | "$taskfer_pager"
+      rm "$tmplist"    
+    else
+      echo "No entries with due date $ddt"
+    fi
+exit 0
+}
+
+# similar to above, with console mode calendar
+function recall_due_cons {
+cal -3
+echo
+ddt=$(date --date="$duedate" +%F)
+while read line
+do
+    if [[ -n $(echo $line | cut -d"|" -f2 | grep $ddt) ]]
+    then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    if [[ -f $tmplist ]]
+    then
+      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort 
+      rm "$tmplist"    
+    else
+      echo "No entries with due date $ddt"
+    fi
+echo
+exit 0
+}
+
+# start with today, recall due, then increment the date by 1 day
+# $days is defined down in the options loop. If no argument is provided
+# for the -w option, it defaults to 8. Otherwise, it's the number of 
+# days provided on the command line. -w 3 will return today plus 3 
+function recall_week {
+    show_cal 
+    echo "Wait..."
+    count=0
+    ddt=$(date +%Y-%m-%d)
+    until [[ "$count" = "$days" ]]
+    do
+        while read line
+        do
+          if [[ -n $(echo $line | cut -d"|" -f2 | grep  $ddt) ]]
+          then
+          echo "$line" >> "$tmplist"
+          fi
+        done < "$tasklist"
+      ddt=$(date --date="$ddt + 1 day" +%Y-%m-%d)
+      ((count+=1))
+    done
+    if [[ -f $tmplist ]]
+    then    
+      sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' | "$taskfer_pager"
+      kill_cal
+      rm "$tmplist"
+    else
+      echo "No tasks listed for next $days days"
+      kill_cal
+    fi       
+exit 0
+}
+
+function recall_week_cons {
+    echo "Wait..."
+    count=0
+    ddt=$(date +%Y-%m-%d)
+    until [[ "$count" = "$days" ]]
+    do
+        while read line
+        do
+          if [[ -n $(echo $line | cut -d"|" -f2 | grep  $ddt) ]]
+          then
+          echo "$line" >> "$tmplist"
+          fi
+        done < "$tasklist"
+      ddt=$(date --date="$ddt + 1 day" +%Y-%m-%d)
+      ((count+=1))
+    done
+    if [[ -f $tmplist ]]
+    then
+    echo
+    cal -3
+    echo
+        sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' 
+        rm "$tmplist"
+    else
+        echo "No tasks listed for next $days days"
+    fi       
+echo
+exit 0
+}
+
+function recall_no_due {
+while read line
+do
+    if [[ -n $(echo $line | cut -d"|" -f2 | grep none) ]]
+    then
+        echo "$line" >> "$tmplist"
+    fi
+done < "$tasklist"
+    if [[ -f $tmplist ]]
+    then
+      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort | "$taskfer_pager"
+      rm "$tmplist"    
+    else
+      echo "No entries without a due date"
+    fi
+exit 0
+}
+
+function recall_keyword {
+cal -3
+echo
+while read line
+  do
+      grep "$key" | awk -F"|" '{ print $1 "\t" $2 $3 }' | sort -n
+  done < "$tasklist"
+exit 0
+}
+
+
+#####@@@@@ DELETE FUNCTIONS @@@@@#####
+
+function ask_del {
+while true
+  do
+    echo "
+    Delete a line?
+    (y,N)
+    "
+    read answer
+    case "$answer" in
+      [Yy]) del_line ;;
+         *) exit 0 ;;
+    esac
+  done
+}
+
+function ask_rdel {
+while true
+  do
+    echo "
+    Delete a line?
+    (y,N)
+    "
+    read answer
+    case "$answer" in
+      [Yy]) rdel_line ;;
+         *) exit 0 ;;
+    esac
+  done
+}
+
+# Display the list with line numbers, ask which line to delete,
+# read the answer, if none, run ask_del.
+# If answer, check for up to four digits, then delete that line,
+# and then run ask_del to see if you want to delete another.
+# Anything other than numeric answer exits the script.
+function del_line {
+while true
+  do
+    line_num=
+    nl "$tasklist" | sort -t"|" -k2
+    echo "
+    Enter line number to delete,
+    : "
+    read line_num
+    if  [[ -z "$line_num" ]]
+    then
+        echo "Nothing was entered"
+        ask_del
+    else
+      case "$line_num" in
+      [0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]) echo "Entry $line_num will be deleted"
+            sleep 1
+            sed -i~ "$line_num"'d'    "$tasklist"
+            ask_del ;;
+         *) echo "Invalid entry."
+            sleep 1
+            ask_del ;;
+      esac
+    fi
+  done
+}
+
+# Same as del_line, but diplay reverse order.
+function rdel_line {
+while true 
+  do
+    line_num=
+    nl "$tasklist" | sort -t"|" -k2 -r
+    echo "
+    Enter line number to delete,
+    : "
+    read line_num
+    if  [[ -z "$line_num" ]]
+    then
+        echo "Nothing was entered"
+        ask_rdel
+    else
+      case "$line_num" in
+      [0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]) echo "Entry $line_num will be deleted"
+            sleep 1
+            sed -i~ "$line_num"'d'  "$tasklist"
+            ask_rdel ;;
+         *) echo "Invalid entry."
+            sleep 1
+            ask_rdel ;;
+      esac
+    fi
+  done
+}
+
+# select entries with due dates no older than today's start, put them in
+# tmplist, make a backup copy of tasklist and replace the tasklist 
+# with the list of newer entries.
+function clean_old {
+while read line
+  do
+    ddt=$(echo $line | cut -d"|" -f2)
+    day1=$(date --date="$ddt" +%s)
+        if (("$day1" > "$day0"))
+        then
+        echo "$line" >> "$tmplist"
+        fi
+  done < "$tasklist"
+    mv "$tasklist" "$tasklist"~
+    mv "$tmplist" "$tasklist"
+    echo "Old entries removed from task list.
+A backup of the old list was made at:
+
+    $tasklist~
+          "
+exit 0
+}
+
+### END OF GROUPED FUNCTIONS
+
+
+function show_help {
+    printf "$help_text"  | "$taskfer_pager"
+    exit 0
+}
+
+help_text="\n 
+  Usage: $0  <option> [arguments]
+     
+  With no options:   The script prompts the user to enter all fields.
+                     Entry screen repeats until you hit ENTER without
+                     typing anything in the fields.
+                     
+                     Valid date formats: month before day, year can be
+                     first or last, but must be four digits.
+                     examples: yyyy-mm-dd, mm/dd/yyyy,
+                     mm/dd, today, tomorrow, next week, tue. 
+                     You don't need to quote dates with spaces in this
+                     entry method.
+
+  valid options: 
+    -a, --add        add/append entry to task list. Free-form dates with
+                     spaces need to be quoted. Message may need quotes.
+                         todo -a <tag> <due-date> <message>
+
+    -d, --due [date] recall entries by due date, quotes not needed.
+                     No argument shows tasks due today.
+
+    -x, --del        delete a line from the task list
+                     -xr  or -rdel reverses the sort
+              
+    -e,  -edit       edit the task list. 
+
+    -h, --help       display this help and exit
+
+    -i,              interactive entry
+
+    -k <keyword>     recall entries by keyword or phrase. Quote phrases.
+
+    -l, -list        list all entries.
+    
+    -n, --none       list entries with \"none\" for due date 
+    
+    -r, --recur      enter a recurrent event.
+
+    -t, --tag <tag>  recall entries by tag
+
+    -w, --week [n]   recall next [n] days; default 8 (incl. today)
+    
+    --clean           removes all entries with due dates older than today
+    
+    -dc, -tc, -wc    same as the respective options above, 
+                     but for console mode. (inline calendar)
+     
+
+
+     "
+
+echo       
+date
+echo 
+
+# If no options are given on the command line, ask for input.
+if [[ -z "$*" ]]
+then
+    cal -3 &
+    sleep 1
+default_entry
+fi
+
+# If the -t option is used (recall by tags) make sure a tag is given.
+if [[ "$1" = "-t" ]]  && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -t <tag>
+    "
+    exit 1
+fi
+
+if [[ "$1" = "-tc" ]]  && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -t <tag>
+    "
+    exit 1
+fi
+
+if [[ "$1" = "-k" ]] && [[ -z "$2" ]]
+then
+    echo "
+    Missing argument.
+    Usage: $0 -k <keyword or phrase>
+    "
+    exit 1
+fi
+
+### COMMAND LINE OPTIONS        
+while [[ $1 == -* ]]
+do
+    case "$1" in
+
+      -a|--add)
+              shift
+              tag="$1" ; shift
+              duedate="$1" ; shift 
+              text="$@" ; test_date ;;
+
+      -d|--due)
+              shift 
+              duedate="$@"
+              recall_due ;;
+
+      -dc)
+              shift
+              duedate="$@"
+              recall_due_cons ;;
+
+      -x|--del)
+              del_line ;;
+
+      -xr|--rdel)
+              rdel_line ;;
+
+      -e|--edit)
+              "$taskfer_editor" "$tasklist"
+              exit 0 ;;
+                 
+      -h|--help|-\?)
+              show_help ;;
+
+      -i|--interactive)
+              ask_entry ;;
+
+      -k|--key|--keyword)
+              key="$2"
+              recall_keyword ;;
+
+      -l|--list)
+              show_cal
+              sort -t"|" -k2 "$tasklist" | \
+              awk -F"|" '{ print $1 "\t" $2 $3 }' | "$taskfer_pager"
+              kill_cal
+              exit 0 ;;
+       
+      -n|--none)
+              recall_no_due ;;
+              
+      -r|--recur|--recurrent)
+              recurrent_event ;;
+
+      -t|--tag)
+              tag="$2"
+              recall_tag ;;
+               
+      -tc)
+              tag="$2"
+              recall_tag_cons ;;
+           
+      -w|--week)
+              if [[ "$2" ]]
+              then 
+                  days="$2"
+              else
+                  days=8 
+              fi 
+              recall_week ;;
+                
+      -wc)
+              if [[ "$2" ]]
+              then
+                  days="$2"
+              else
+                  days=8
+              fi
+              recall_week_cons ;;
+           
+      --clean)
+              clean_old ;;
+      
+      -c)
+              printf "\n\t You must use the full option, \"--clean\" \n"
+              printf "\t to delete all the old entries. \n\n"
+                  1>&2; exit 1 ;;
+
+       *) 
+              printf "\t invalid option: $1 \n\n"
+              printf "\t Try:  $0 -h for full help. \n\n"
+                  1>&2; exit 1 ;;
+    esac
+done
