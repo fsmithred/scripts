@@ -143,10 +143,9 @@ fi
 function append_entry {
      echo "$tag | $ddt | $text | Entered on $(date +%Y-%m-%d)" >> "$tasklist"
      echo
-     echo "$tag | $ddt | $text |" # Entered on $(date +%Y-%m-%d)
+     echo "$tag | $ddt | $text |  Entered on $(date +%Y-%m-%d)"
      echo
      sleep 1
-     default_entry
 }
 
 function test_date {
@@ -467,7 +466,9 @@ function del_line {
 while true
   do
     line_num=
-    nl "$tasklist" | sort -t"|" -k2
+    sort -t"|" -k2  "$tasklist" > "$tmplist"
+    mv "$tmplist" "$tasklist"
+    nl "$tasklist"
     echo "
     Enter line number to delete,
     : "
@@ -495,7 +496,9 @@ function rdel_line {
 while true 
   do
     line_num=
-    nl "$tasklist" | sort -t"|" -k2 -r
+    sort -t"|" -k2 -r "$tasklist" > "$tmplist"
+    mv "$tmplist" "$tasklist"
+    nl "$tasklist"
     echo "
     Enter line number to delete,
     : "
@@ -651,6 +654,7 @@ do
               tag="$1" ; shift
               duedate="$1" ; shift 
               text="$@" ; test_date ;;
+
 
       -d|--due)
               shift 
