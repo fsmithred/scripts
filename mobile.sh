@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# mobile.sh
+# Print taskfer output to file.
+#
+# Run this as ./mobile.sh -p nn
+# where nn is number of days output you want. This works like
+# the -w option. If you don't put anything after the -p, it will
+# output the next week, with one file for each day.
+#
+
 
 taskfer_dir=$HOME/.taskfer
 
