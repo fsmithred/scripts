@@ -43,11 +43,16 @@
 #   recurrent_event - adds multiple entries for a recurrent event.
 #
 # RECALL FUNCTIONS, to sort and display entries: 
-#   recall_tag  -  Display entries that have the selected tag.
-#                  Tags can be up to six characters.
-#   recall_keyword - Searches for key word or phrase in all fields.
-#   recall_due  -  Recall entries due on a single date. 
-#   recall_week -  Recall entries due on a span of dates.
+#   recall_tag      - Display entries that have the selected tag.
+#                     Tags can be up to six characters.
+#   recall_keyword  - Searches for key word or phrase in all fields.
+#   recall_due      - Recall entries due on a single date.
+#   recall_no_due   - Recall entries that have "none" in due date field. 
+#   recall_week     - Recall entries due on a span of dates.
+#   print_day_files - Print to individual files those entries due
+#                     for given due dates. One file per date.
+#   print_week_file - Print to single file those entries due 
+#                     for given span of due dates.
 # 
 # Function names that end in _cons will show the calender inline, 
 # instead of spawning a new terminal, for use when running in console.
@@ -56,11 +61,9 @@
 #   del_line, ask_del - to remove one line at a time.
 #   clean_old - remove all entries with due dates older than today.
 #
-# And then there are a few that don't fit a category.
+# OTHER FUNCTIONS
 #   taskfer_configuration - checks for config file settings.
 #   show_help - displays the help_text
-#   show_cal - displays calendar in popup xterm - deprecated
-#   kill_cal - closes the popup calendar.
 #
 
 
@@ -80,13 +83,16 @@
 # day1 is some other date converted to seconds, for date arithmetic.
 
 
-# This directory will hold the tasklist file, a config file, and
+# taskfer_dir will hold the tasklist file, a config file, and
 # any temporary files that get used in running the script.
 # A config file is not required, but makes it easier to change
 # some defaults.
+# print_dir will hold output files created with the -p option. Those
+# files will be named "todolist_(due date)"
 ## IF YOU WANT TASKFER TO USE A DIFFERENT DIRECTORY, CHANGE IT HERE. ##
-taskfer_dir=$HOME/.taskfer
 
+taskfer_dir=$HOME/.taskfer
+print_dir="$taskfer_dir"
 
 if ! [[ -d $taskfer_dir ]]
     then
@@ -102,8 +108,9 @@ function taskfer_configuration {
 #    # if any are unset, this will set them.
     tasklist=${tasklist:="$taskfer_dir/tasklist"}
     tmplist=${tmplist:="$taskfer_dir/tmplist"}
-    taskfer_pager=${taskfer_pager:=$(which less)}
-    taskfer_editor=${taskfer_editor:=$(which vim)}
+    todolist=${todolist:="$print_dir/todolist"}
+    taskfer_pager=${taskfer_pager:=$(type -p less)}
+    taskfer_editor=${taskfer_editor:=$(type -p nano)}
 }
 
 taskfer_configuration
@@ -269,7 +276,7 @@ do
 done < "$tasklist"
     if [[ -f $tmplist ]]
     then
-#     # calendar at top of output
+#     # calendar at top of output, sorts by date and then by message (could be by time, if time is at beginning of message.)
       { cal -3 ; echo ; sort -n "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo -e "\n\n" ;  }  | "$taskfer_pager"
 #     # calendar at bottom of output
 #      { awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort -n  ; echo -e "\n\n" ; cal -3 ;  }  | "$taskfer_pager"
@@ -318,10 +325,10 @@ do
 done < "$tasklist"
     if [[ -f $tmplist ]]
     then
-#     # no calendar
-#      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort | "$taskfer_pager"
 #     # calendar at top of output, sorts by tag
-      { cal -3 ; echo ; sort -n "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo -e "\n\n" ;  }  | "$taskfer_pager"
+#      { cal -3 ; echo ; sort -n "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo -e "\n\n" ;  }  | "$taskfer_pager"
+#     # calendar at top, sort by message field - works for times if time is first.
+      { cal -3 ; echo ; sort -t"|" -k3  "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo -e "\n\n" ;  }  | "$taskfer_pager"
       rm "$tmplist"    
     else
       echo "No entries with due date $ddt"
@@ -344,9 +351,9 @@ done < "$tasklist"
     if [[ -f $tmplist ]]
     then
 #      # sort by tag
-      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort 
+#      awk -F"|" '{ print $1 "\t" $2 $3 }' "$tmplist" | sort 
 #     # sort by message field - works for times if time is first.
-#      sort -t"|" -k3 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }'
+      sort -t"|" -k3 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }'
       rm "$tmplist"    
     else
       echo "No entries with due date $ddt"
@@ -379,15 +386,9 @@ function recall_week {
     if [[ -f $tmplist ]]
     then    
     { cal -3 ; echo ; sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo ; } | "$taskfer_pager"
-#    # This line outputs the calendar and entries to a date-stamped text file.
-#    { cal -3 ; echo ; sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo -e "\n\n" ; } > todolist_$(date +%F)
-#     # This line outputs just the entries to a date-stamped text file.
-#    { echo ; sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo ; } > todolist_$(date +%F)
-     { echo ; sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; echo ; } > todolist_$(date +%F)
       rm "$tmplist"
     else
       echo "No tasks listed for next $days days"
-      kill_cal
     fi       
 exit 0
 }
@@ -453,7 +454,7 @@ while read line
 exit 0
 }
 
-function print_daysheets {
+function print_day_files {
     echo "Wait..."
     count=0
     ddt=$(date +%Y-%m-%d)
@@ -468,7 +469,7 @@ function print_daysheets {
         done < "$tasklist"
             if [[ -f $tmplist ]]
             then    
-            { sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "|" $3 }' ; } > todolist_"$ddt"
+            { sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "|" $3 }' ; } > "$todolist"_"$ddt"
             rm "$tmplist"
             fi
       ddt=$(date --date="$ddt + 1 day" +%Y-%m-%d)
@@ -477,6 +478,34 @@ function print_daysheets {
 exit 0
 }
 
+function print_week_file {
+    echo "Wait..."
+    count=0
+    ddt=$(date +%Y-%m-%d)
+    until [[ "$count" = "$days" ]]
+    do
+        while read line
+        do
+          if [[ -n $(echo $line | cut -d"|" -f2 | grep  $ddt) ]]
+          then
+          echo "$line" >> "$tmplist"
+          fi
+        done < "$tasklist"
+      ddt=$(date --date="$ddt + 1 day" +%Y-%m-%d)
+      ((count+=1))
+    done
+    if [[ -f $tmplist ]]
+    then    
+#    # This line outputs the calendar and entries to a date-stamped text file.
+#    { cal -3 ; echo ; sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; } > todo_week_$(date +%F)
+#     # This line outputs just the entries to a date-stamped text file.
+    { sort -t"|" -k2 "$tmplist" | awk -F"|" '{ print $1 "\t" $2 $3 }' ; } > todo_week_$(date +%F)
+      rm "$tmplist"
+    else
+      echo "No tasks listed for next $days days"
+    fi       
+exit 0
+}
 
 #####@@@@@ DELETE FUNCTIONS @@@@@#####
 
@@ -592,14 +621,21 @@ while true
 # tmplist, make a backup copy of tasklist and replace the tasklist 
 # with the list of newer entries.
 function clean_old {
+beginday=$(date +%Y-%m-%d) 
+day0=$(date --date="$beginday" +%s)
 while read line
   do
-    ddt=$(echo $line | cut -d"|" -f2)
-    day1=$(date --date="$ddt" +%s)
-        if (("$day1" > "$day0"))
-        then
-        echo "$line" >> "$tmplist"
-        fi
+      ddt=$(echo "$line" | cut -d"|" -f2)
+      if [[ "$ddt" = " none " ]]
+      then
+          echo "$line"  >> "$tmplist"
+      else
+          day1=$(date --date="$ddt" +%s)
+            if (("$day1" > "$day0"))
+            then
+                echo "$line"  >> "$tmplist"
+            fi
+      fi
   done < "$tasklist"
     mv "$tasklist" "$tasklist"~
     mv "$tmplist" "$tasklist"
@@ -657,7 +693,11 @@ help_text="\n
     -n, --none       list entries with \"none\" for due date 
 
     -p, --print [n]  print to file next [n] days, one date-stamped file
-                     for each due date; default 8 (incl. today)    
+                     for each due date; default 8 (incl. today)
+
+    -pw [n]          print the next [n] days in a single, date-stamped
+                     file; default 8 days (incl. today) 
+    
 
     -r, --recur      enter a recurrent event.
 
@@ -786,7 +826,16 @@ do
               else
                   days=8 
               fi 
-              print_daysheets ;;
+              print_day_files ;;
+              
+      -pw|--printweek
+              if -- "$2" ]]
+              then
+                  days="$2"
+              else
+                  days=8
+              fi
+              print_week_file ;;
 
       -r|--recur|--recurrent)
               recurrent_event ;;
