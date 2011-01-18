@@ -224,7 +224,11 @@ echo "
   Checking that the name has been changed...
   "
 sleep 2
-echo $(id $oldname)
+if ! id $oldname  >/dev/null 2>&1 ; then
+    echo "$oldname has been deleted."
+else
+    echo "Something is wrong. $oldname still exists"
+fi
 sleep 3
 echo "$newname is in these groups:"
 echo $(id $newname)
