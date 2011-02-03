@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # refracta extra package selection and installation tool version 0.1
+# Copyright 2011 fsmithred@gmail.com
+# License: GPL-3  This is free software with no warranties, express 
+# or implied. Use at your own risk. 
 #
 # SYNOPSIS:
 # Check that user is root. Ask to run update, ask to run full-upgrade.
@@ -14,7 +17,7 @@
 # install_list array.
 
 #### NOTE: This is a test version. The update and upgrade are real, but 
-#### package installation is simulated. Edit line 69 to change that.
+#### package installation is simulated. Edit line 72 to change that.
 
 # define some package lists.
 # single packages can be added to the menu without being defined here.
