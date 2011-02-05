@@ -115,7 +115,7 @@ make_selections () {
   If you want to exit this script without installing anything, select
   \"exit\".\n\n"
 	
-Options="dvd_set file_share graphics mousepad roxterm done(install) exit"
+Options="dvd_set file_share graphics mousepad roxterm done exit"
 select opt in $Options; do
     if [[ "$opt" = "dvd_set" ]]; then
         selection="${dvd_set[@]}"
