@@ -115,33 +115,33 @@ make_selections () {
   If you want to exit this script without installing anything, select
   \"exit\".\n\n"
 	
-Options="dvd_set file_share graphics mousepad roxterm done exit"
+Options="dvd_set file_share graphics mousepad roxterm done(install) exit"
 select opt in $Options; do
     if [[ "$opt" = "dvd_set" ]]; then
-        export selection="${dvd_set[@]}"
+        selection="${dvd_set[@]}"
         printf "\n\t This set contains packages necessary 
          for watching DVD movies.
          Packages: ${selection[@]}\n"
         ask_install
     elif [[ "$opt" = "file_share" ]]; then
-        export selection="${file_share[@]}"
+        selection="${file_share[@]}"
         printf "\n\t This set contains packages for sharing files
          with computers running MS Windows.
          Packages: ${selection[@]}\n"
         ask_install
     elif [[ "$opt" = "graphics" ]]; then
-        export selection="${graphics[@]}"
+        selection="${graphics[@]}"
         printf "\n\t This set contains packages for creating and
          editing images and movies.
          Packages: ${selection[@]}\n"
         ask_install
     elif [[ "$opt" = "mousepad" ]]; then
-        export selection=(mousepad)
+        selection=(mousepad)
         printf "\n\t Mousepad is a simple Xfce oriented text editor.
          Packages: ${selection[@]}\n"
         ask_install
     elif [[ "$opt" = "roxterm" ]]; then
-        export selection=(roxterm)
+        selection=(roxterm)
         printf "\n\t roxterm is a multi-tabbed GTK/VTE terminal emulator.
          Packages: ${selection[@]}\n"
         ask_install
