@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# refracta extra package selection and installation tool version 0.1
+# refracta extra package selection and installation tool version 0.2
 # Copyright 2011 fsmithred@gmail.com
 # License: GPL-3  This is free software with no warranties, express 
 # or implied. Use at your own risk. 
@@ -29,6 +29,22 @@ graphics=(gimp blender inkscape)
 # Check that user is root.
 [[ $(id -u) -eq 0 ]] || { printf "\t You need to be root!\n" ; exit 1 ; }
 
+
+# Ask to run upgrade.
+ask_upgrade () {
+while true; do
+    printf "\n  If any packages were listed for installation in the last
+  step, you should upgrade them now by answering \"yes\".
+    
+  Install security updates? "
+    read ans
+    case $ans in
+      [Yy]*) aptitude full-upgrade ; break 2 ;;
+      [Nn]*) break 2 ;;
+    esac
+done
+}
+
 # Ask to run update.
 while true; do
     printf "  The package list needs to be updated before installing
@@ -45,26 +61,13 @@ while true; do
              aptitude -s full-upgrade
              read -p "  Press the ENTER key when you're ready to proceed."
              sleep 1
-             break ;;
+             ask_upgrade ;;
       [Nn]*) break ;;
     esac
 done
 
-# Ask to run upgrade.
-while true; do
-    printf "\n  If any packages were listed for installation in the last
-  step, you should upgrade them now by answering \"yes\".
-    
-  Install security updates? "
-    read ans
-    case $ans in
-      [Yy]*) aptitude full-upgrade ; break ;;
-      [Nn]*) break ;;
-    esac
-done
-
-# Set an informative prompt for the menu.
-PS3="Enter a choice or just hit ENTER to see the list."
+# Set a prompt for the menu.
+PS3="Choice by NUMBER: "
 
 # Don't quote the array here, or aptitude will puke.
 install_selections () {
@@ -86,18 +89,16 @@ ask_install () {
 		printf "\n\t Add these packages to the install list?\n
          y)   add packages and return to selection menu
          n)   don't add anything, but return to the selection menu
-         e)   exit this utility
-     "
+      "
 	    read ans
 	    case $ans in
 	      [Yy]*)  install_list=( "${install_list[@]}" "${selection[@]}" )
 	              printf "\t The following packages are marked for installation.\n"
                   echo "${install_list[@]}"
                   printf "\n"
-	              break ;;
-	      [Nn]*)  break ;;
-	      [Ee]*)  exit 0 ;;
-	    esac
+	              make_selections ;;
+	      [Nn]*)  make_selections ;;
+	      esac
 	done
 }
 
@@ -108,14 +109,14 @@ ask_install () {
 # Note the different syntax on the export line for single packages
 # vs. package lists.
 make_selections () {
-	printf "
+	echo "
   Select package groups by the number to get more information about them.
   You will be asked if you want to add them to the installation list or not.
-  When you're ready to install the packages, select \"done\".
+  When you're ready to install the packages, select \"install\".
   If you want to exit this script without installing anything, select
   \"exit\".\n\n"
 	
-Options="dvd_set file_share graphics mousepad roxterm done exit"
+Options="dvd_set file_share graphics mousepad roxterm install exit"
 select opt in $Options; do
     if [[ "$opt" = "dvd_set" ]]; then
         selection="${dvd_set[@]}"
@@ -145,7 +146,7 @@ select opt in $Options; do
         printf "\n\t roxterm is a multi-tabbed GTK/VTE terminal emulator.
          Packages: ${selection[@]}\n"
         ask_install
-    elif [[ "$opt" = "done" ]]; then
+    elif [[ "$opt" = "install" ]]; then
         install_selections
     elif [[ "$opt" = "exit" ]]; then
         printf "\t Exiting... \n"
@@ -154,9 +155,6 @@ select opt in $Options; do
 done
 }
 
-return_to_menu () {
-	make_selections
-}
 
 
-return_to_menu
+make_selections
