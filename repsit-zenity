@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # repsit-zenity
+# copyright 2011 fsmithred@gmail.com
+# License: GPL-3
 
 # NOTES: 1. Installation of update-manager-gnome hangs (running iso in vbox) on "Processing triggers for gconf2" in refracta-6-beta
 #        and in my own live-squeeze build. SKIP THE UPDATE WHEN IT ASKS! (unless you already have update-manager installed or you want to test.)
