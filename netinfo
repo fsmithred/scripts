@@ -1,7 +1,6 @@
 #!/bin/bash
 printf "\n ---------------- Network Addresses ---------------- \n\n"
-/sbin/ifconfig  | grep -A1 encap | awk 'END{print __}{_=__}{__=$0;$1=_}_' | awk ' /encap/ { print $1 "  " $6  "\t\t"  $5 }' | grep -v lo | grep -v "\-\-"
-printf "\n"
+/sbin/ifconfig  | grep -A1 encap | awk 'END{print __}{_=__}{__=$0;$1=_}_' | awk ' /eth|tap|wlan/ { print $1 "  " $6  "\t\t"  $5 "\n" }'
 /usr/bin/w3m -dump http://checkip.dyndns.org
 printf "\n --------------------------------------------------- \n\n"
 exit 0
