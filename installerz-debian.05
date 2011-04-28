@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# installerz-debian.05
+# installerz-debian-20110428
 # Copyright 2011 fsmithred@gmail.com
 # License: GPL-3
 # This is free software with NO WARRANTY. Use at your own risk!
@@ -235,7 +235,7 @@ fi
 
 # Show the partition list in a menu, and choose one for /boot
 choose_boot () {
-boot_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]" \
+boot_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][1-9]*" \
   | sort | awk '{print "FALSE\n" $0 }' \
   | zenity --list --title="/boot partition" --text="Select a partition for /boot." \
  --radiolist --multiple --column ' ' --column 'Partitions' --height=380 --width=150)
@@ -276,7 +276,7 @@ echo "@@@ three @@@"
 
 # Show the partition list in a menu, and choose one for the OS
 choose_root () {
-install_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]" \
+install_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][1-9]*" \
   | sort | awk '{print "FALSE\n" $0 }' \
   | zenity --list --title="Root Partition" --text="Choose a partition to use for the installation of the operating system." \
 --radiolist --multiple --column ' ' --column 'Partitions' --height 380 --width 150)
@@ -333,7 +333,7 @@ choose_fs_os
 echo "@@@ four @@@"
 # Show the partition list in a menu, and choose one for /home
 choose_home () {
-home_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][0-9]" \
+home_dev=$(find /dev -mindepth 1 -maxdepth 1  -name "*[sh]d[a-z][1-9]*" \
   | sort | awk '{print "FALSE\n" $0 }' \
   | zenity --list --title="/home partition" --text="Select a partition for /home" \
 --radiolist --multiple --column ' ' --column 'Partitions' --height=380 --width=150)
