@@ -33,6 +33,7 @@ cryptvols=$(blkid | sort | awk -F: '/crypto/ { print "FALSE\n" $1 }' |\
 	zenity --list --checklist --title "Encrypted Partitions"  \
 	--text "Choose encrypted partitions to open and mount." \
 	--multiple --column ' ' --column 'Encrypted Volumes' --height=200)
+[[ $? = 0 ]] || exit 0
 
 # Replace "|" with space between the device names. 
 to_mount=$(echo "$cryptvols" | sed 's/|/ /g')
